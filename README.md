@@ -8,6 +8,10 @@ Participants reported their social contacts made on the day prior to survey part
 ![](figures/contacts.png)
 **Figure. Crude mean number of contacts by survey wave and age group in Switzerland.** Numbers represent all contacts and contacts were truncated at 50 per day. Data cover the time period from January 2021 to May 2022.
 
+## Reports
+1. [CoMix social contact survey: Report for Switzerland rounds 1 to 16](reports/Report_CoMix_Switzerland_20210928.pdf) (28 September 2021)
+2. [Social contacts and attitudes towards vaccination during the COVID-19 pandemic: Insights from the CoMix study](reports/Report_CoMix_Switzerland_20220913.pdf) (13 September 2022)
+
 ## Data
 The social contact data from the first 16 survey waves are available on [socialcontactdata.org](http://www.socialcontactdata.org). Social contact data for all 24 survey waves will be made available on this repository.
 
