@@ -12,6 +12,10 @@ Participants reported their social contacts made on the day prior to survey part
 1. [CoMix social contact survey: Report for Switzerland rounds 1 to 16](reports/Report_CoMix_Switzerland_20210928.pdf) (28 September 2021)
 2. [Social contacts and attitudes towards vaccination during the COVID-19 pandemic: Insights from the CoMix study](reports/Report_CoMix_Switzerland_20220913.pdf) (13 September 2022)
 
+## Publications
+1. Wong KL, Gimma A, Paixao ES, Faes C, Neutels P, Hens N, Jarvis CI, Edmunds WJ, CoMix Europe Working Group. [Pregnancy during COVID-19: social contact patterns and vaccine coverage of pregnant women from CoMix in 19 European countries](https://doi.org/10.1101/2022.06.01.22275775). medRxiv. 2022.
+2. Wong KL, Gimma A, Coletti P, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI. [Social contact patterns during the COVID-19 pandemic in 21 European countries: evidence from a two-year study](https://doi.org/10.1101/2022.07.25.22277998). medRxiv. 2022.
+
 ## Data
 The social contact data from the first 16 survey waves are available on [socialcontactdata.org](http://www.socialcontactdata.org). Social contact data for all 24 survey waves will be made available on this repository.
 
