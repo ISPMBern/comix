@@ -28,4 +28,4 @@ The social contact data from the first 16 survey waves are available on [socialc
 ## Acknowledgement
 <img src="figures/epipose.png" width="100"/>
 
-We acknowledge financial support from FOPH and the European Union’s Horizon 2020 research and innovation programme - project [EpiPose](https://www.uhasselt.be/en/aparte-sites-partner-en/epipose) (No 101003688). We also like to thank the European Centre for Disease Prevention and Control (ECDC) and the CoMix Europe Working Group for setting up the collaborations across more than 20 European countries, and the partners at Ipsos MORI for running the survey.
+We acknowledge financial support from the European Union’s Horizon 2020 research and innovation programme - project [EpiPose](https://www.uhasselt.be/en/aparte-sites-partner-en/epipose) (No 101003688) and the Federal Office of Public Health (FOPH). We also like to thank the European Centre for Disease Prevention and Control (ECDC) and the CoMix Europe Working Group for setting up the collaborations across more than 20 European countries, and the partners at Ipsos MORI for running the survey.
