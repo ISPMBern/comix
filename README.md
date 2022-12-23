@@ -17,7 +17,9 @@ Participants reported their social contacts made on the day prior to survey part
 2. [Social contact patterns during the COVID-19 pandemic in 21 European countries: evidence from a two-year study](https://doi.org/10.1101/2022.07.25.22277998). Wong KL, Gimma A, Coletti P, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI, CoMix Europe Working Group. medRxiv. 2022.
 
 ## Data
-The social contact data from the first 16 survey waves are available on [socialcontactdata.org](http://www.socialcontactdata.org). Social contact data for all 24 survey waves will be made available on this repository.
+The social contact data from the first 16 survey waves are available on [Zenodo](https://doi.org/10.5281/zenodo.6542657). Social contact data for all 24 survey waves will be made available on Zenodo and this repository.
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6542657.svg)](https://doi.org/10.5281/zenodo.6542657)
 
 ## Team
 - [Martina Reichmuth, MSc](https://duckduckgo.com/?q=reichmuth+ispm&t=osx&ia=web)
