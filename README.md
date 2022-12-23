@@ -22,7 +22,7 @@ The social contact data from the first 16 survey waves are available on [Zenodo]
 2. [Social contact patterns during the COVID-19 pandemic in 21 European countries: evidence from a two-year study](https://doi.org/10.1101/2022.07.25.22277998). Wong KL, Gimma A, Coletti P, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI, CoMix Europe Working Group. medRxiv. 2022.
 
 ## Team
-- [Martina Reichmuth, MSc](https://duckduckgo.com/?q=reichmuth+ispm&t=osx&ia=web)
+- [Martina Reichmuth, MSc](https://www.ispm.unibe.ch/about_us/staff/reichmuth_martina/index_eng.html)
 - [Dr. Leonie Heron](https://www.ispm.unibe.ch/about_us/staff/heron_leonie/index_eng.html)
 - [Prof. Dr. Nicola Low](https://www.ispm.unibe.ch/about_us/staff/low_nicola/index_eng.html)
 - [PD Dr. Christian Althaus](https://www.ispm.unibe.ch/about_us/staff/althaus_christian/index_eng.html)
