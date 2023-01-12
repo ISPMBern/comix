@@ -18,6 +18,7 @@ The social contact data from the first 16 survey waves are available on [Zenodo]
 2. [Social contacts and attitudes towards vaccination during the COVID-19 pandemic: Insights from the CoMix study](reports/Report_CoMix_Switzerland_20220913.pdf) (13 September 2022)
 
 ## Publications
+The following publications include data from the CoMix survey in Switzerland:
 1. [Pregnancy during COVID-19: social contact patterns and vaccine coverage of pregnant women from CoMix in 19 European countries](https://doi.org/10.1186/s12884-022-05076-1). Wong KLM, Gimma A, Paixao ES; CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jarvis CI, Edmunds WJ. BMC Pregnancy Childbirth. 2022 Oct 8;22(1):757.
 2. [Social contact patterns during the COVID-19 pandemic in 21 European countries: evidence from a two-year study](https://doi.org/10.1101/2022.07.25.22277998). Wong KL, Gimma A, Coletti P, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI, CoMix Europe Working Group. medRxiv. 2022.
 3. [The influence of COVID-19 risk perception and vaccination status on the number of social contacts across Europe: insights from the CoMix study](https://doi.org/10.1101/2022.11.25.22282676). Wambua J, Loedy N, Jarvis CI, Wong KL, Faes C, Grah R, Prasse B, Sandmann F, Niehus R, Johnson H, Edmunds WJ, Beutels P, Hens N, Coletti P. medRxiv. 2022.
