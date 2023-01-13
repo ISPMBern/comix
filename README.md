@@ -9,9 +9,24 @@ Participants reported their social contacts made on the day prior to survey part
 **Figure. Crude mean number of contacts by survey wave and age group in Switzerland.** Numbers represent all contacts and contacts were truncated at 50 per day. Data cover the time period from January 2021 to May 2022.
 
 ## Data
-The social contact data from the first 16 survey waves are available on [Zenodo](https://doi.org/10.5281/zenodo.6542657). Social contact data for all 24 survey waves will be made available on Zenodo and this repository.
+The social contact data from the first 16 survey waves are available on [Zenodo](https://doi.org/10.5281/zenodo.6542656). Social contact data for all 24 survey waves will be made available on Zenodo and this repository.
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6542657.svg)](https://doi.org/10.5281/zenodo.6542657)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6542656.svg)](https://doi.org/10.5281/zenodo.6542656)
+
+To analyze the data and create social contact matrices, we recommend to install the `R` package [`socialmixr`](https://github.com/epiforecasts/socialmixr):
+```r
+install.packages("socialmixr")
+```
+The data from the first 16 survey waves of the Swiss CoMix study can be downloaded using the function `get_survey()`:
+```r
+library(socialmixr)
+comix <- get_survey("https://doi.org/10.5281/zenodo.6542656")
+```
+The `contact_matrix()` function extracts a contact matrix from survey data and contact matrices can be plotted using the function `matrix_plot()`:
+```r
+m <- contact_matrix(comix, age.limits = c(0, 5, 15, 30, 65), filter = list(panel = c("A", "C")))
+matrix_plot(m)
+```
 
 ## Reports
 1. [CoMix social contact survey: Report for Switzerland rounds 1 to 16](reports/Report_CoMix_Switzerland_20210928.pdf) (28 September 2021)
