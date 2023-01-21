@@ -29,8 +29,7 @@ m <- contact_matrix(comix,
                     age.limits = c(0, 5, 15, 30, 65),
                     filter = list(panel = c("A", "C")),
                     symmetric = TRUE,
-                    weigh.dayofweek = TRUE)
-                    
+                    weigh.dayofweek = TRUE)         
 par(mfrow = c(1, 2))
 colfunc <- colorRampPalette(c("steelblue", "white"))
 barplot(rowSums(m$matrix),
