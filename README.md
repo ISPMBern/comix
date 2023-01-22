@@ -12,6 +12,7 @@ Participants reported their social contacts made on the day prior to survey part
 The social contact data from the first 16 survey waves are available on [Zenodo](https://doi.org/10.5281/zenodo.6542656). Social contact data for all 24 survey waves will be made available on Zenodo and this repository.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6542656.svg)](https://doi.org/10.5281/zenodo.6542656)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 ## Social mixing matrices
 To analyze the data and create social contact matrices, we recommend to install the `R` package [`socialmixr`](https://github.com/epiforecasts/socialmixr):
