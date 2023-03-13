@@ -45,17 +45,17 @@ library(survminer)
 path_function = "R/"
 path_saveoutput = "output/"
 
-setwd("./data_cleaning")
+#setwd("./data_cleaning")
 # run functions to use
-files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
-files_functions = files_functions[!grepl(pattern = "000|backup",files_functions)]
-sapply(files_functions, source)
-rm(files_functions)
+#files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
+#files_functions = files_functions[!grepl(pattern = "000|backup",files_functions)]
+#sapply(files_functions, source)
+#rm(files_functions)
 
-setwd("../vaccination_uptake")
+setwd("./vaccination_uptake")
 # run functions to use
 files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
-files_functions = files_functions[!grepl(pattern = "000|backup",files_functions)]
+files_functions = files_functions[!grepl(pattern = "000|backup|/README",files_functions)]
 sapply(files_functions, source)
 rm(files_functions)
 

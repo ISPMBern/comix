@@ -33,7 +33,7 @@ output_log_missing <- comix_012_missingparticipating(comixdata_reg)
 output_poissonreg <- comix_013_vaccination_poissonregression(comixdata_reg)
 output_reg <-cbind(output_poissonreg[c(1:4)], output_tte[[2]][-c(1,2,4,6,8)], output_poissonreg[-c(1:5,7,9,11,13)])# Combine regression models
 all_regression <- output_reg[,!grepl("P-value", colnames(output_reg))]
-write.csv(all_regression, "../../figures/vaccination_uptake/SupTable2.csv")
+write.csv(all_regression, "../../tables/vaccination_uptake/SupTable2.csv")
 
 # save data generated (is needed to generate rmd output file):
 save.image(paste0(path_name,"comix_project_",Sys.Date(),".RData"))

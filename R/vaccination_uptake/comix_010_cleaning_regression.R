@@ -29,8 +29,10 @@ comix_010_cleaning_regression = function(comixdata_part) {
          "%)")
   data_reg$wave<- as.numeric(gsub(".*?([0-9]+).*", "\\1",data_reg$panel_wave)) 
   data_reg$panel_wave <- factor(data_reg$panel_wave, levels=unique(data_reg$panel_wave)[order(gsub("B","",unique(data_reg$panel_wave)))])
-  fut_id <- quantile(as.data.frame(data_reg %>%  group_by(part_id) %>% summarise(min_date = max(date) -min(date)) %>% ungroup())[,2])
+  fut_id <- quantile(as.data.frame(data_reg %>%  group_by(part_id) %>% summarise(range_fut = max(date) -min(date)) %>% ungroup())[,2])
   paste0("Following up time: ", fut_id[3], " (", fut_id[2],"-",fut_id[4],")")
+  fut_mean <- mean(as.data.frame(data_reg %>%  group_by(part_id) %>% summarise(range_fut = max(date) -min(date)) %>% ungroup())[,2])
+  paste0("Following up time on average: ", fut_mean)
   
   
   panel_wave <- data_reg %>%  group_by(wave) %>% 
@@ -174,7 +176,7 @@ comix_010_cleaning_regression = function(comixdata_part) {
     theme(legend.position = 'top')+ 
     scale_y_continuous(labels = function(x) paste0(x, "%"))+
     guides(color = guide_legend(nrow=2,byrow=TRUE,override.aes = list( linetype = lables_fig1_shape)))+
-    labs(tag="",x = "", y =bquote("Vaccine uptake (%)"))
+    labs(tag="",x = "", y =bquote("Vaccination uptake (%)"))
   paste0("Vaccination attitude in CoMix (B1): ",paste0(names(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"])), ": ",table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"]), " (",round(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"])/sum(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"]))*100,1),"%)",collapse = "; "))
   paste0("Vaccination attitude in CoMix (B6): ",paste0(names(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"])), ": ",table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"]), " (",round(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"])/sum(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"]))*100,1),"%)",collapse = "; "))
   
@@ -293,7 +295,7 @@ for (w in unique(data_reg$panel_wave)) {
     summarise("part_num" = length(lower.age.limit)
     )%>%
     ungroup()
-  x$precent <- round(x$part_num/sum(x$part_num)*100,2)
+  x$precent <- round(x$part_num/sum(x$part_num)*100,1)
   if(sum(!is.na(x$lower.age.limit))>0){
     for (a in x$lower.age.limit) {
       age_table[!is.na(age_table$`Age group`) & age_table$`Age group`%in%a,w] <- paste0(x[x$lower.age.limit %in% a,c(2)]," (",x[x$lower.age.limit %in% a,c(3)],"%)")
@@ -310,7 +312,7 @@ age_table[,4] <- paste0(format(age_table[,4],nsmall=0, big.mark=",")," (", round
 age_table[is.na(age_table)] <- " "
 age_table[,2] <- levels(data_reg$age_bands)
 age_table[1,1] <- "Age group"
-colnames(age_table) <- c("Category","Name", "Population size (precent)","Participants number (precent)",   levels(data_reg$panel_wave))
+colnames(age_table) <- c("Category","Name", "Swiss population, n (%)","Study participants, n (%)",   levels(data_reg$panel_wave))
 
 # gender, 
 ## gender comparing Swiss population with CoMix data:
@@ -329,7 +331,7 @@ for (w in unique(data_reg$panel_wave)) {
     summarise(part_num = length(sex)
     )%>%
     ungroup()
-  x$precent <- round(x$part_num/sum(x$part_num)*100,2)
+  x$precent <- round(x$part_num/sum(x$part_num)*100,1)
   if(!is.na(x[3,3])){
   }
   for (r in x$sex) {
@@ -340,7 +342,7 @@ gender_table[c(1,1),3] <- paste0(format(gender_table[c(1,1),3],nsmall=0, big.mar
 gender_table[,4] <- paste0(format(gender_table[,4],nsmall=0, big.mark=",")," (", round(gender_table[,4]/sum(gender_table[,4])*100,1),"%)")
 gender_table[is.na(gender_table)] <- " "
 gender_table[1,1] <- "Gender"
-colnames(gender_table) <- c("Category","Name", "Population size (precent)","Participants number (precent)", levels(data_reg$panel_wave))
+colnames(gender_table) <- c("Category","Name", "Swiss population, n (%)","Study participants, n (%)", levels(data_reg$panel_wave))
 
 
 ## income:
@@ -368,7 +370,7 @@ for (w in unique(data_reg$panel_wave)) {
   x<- as.data.frame(x %>%
                       group_by(household_income_3cat) %>% 
                       summarise(part_num = length(household_income_3cat))%>%ungroup())
-  x$precent <- round(x$part_num/sum(x$part_num)*100,2)
+  x$precent <- round(x$part_num/sum(x$part_num)*100,1)
   for (r in x$household_income_3cat) {
     income_table[income_table$`Household income` ==r,w] <- paste0(format(as.numeric(x[x$household_income_3cat == r,c(2)]), nsmall=0, big.mark=",")," (",x[x$household_income_3cat == r,c(3)],"%)")
   }
@@ -378,7 +380,7 @@ income_table[,4] <- paste0(format(income_table[,4],nsmall=0, big.mark=",")," (",
 
 income_table[is.na(income_table)] <- " "
 income_table[1,1] <- "Household income"
-colnames(income_table) <- c("Category","Name", "Population size (precent)","Participants number (precent)", levels(data_reg$panel_wave))
+colnames(income_table) <- c("Category","Name", "Swiss population, n (%)","Study participants, n (%)", levels(data_reg$panel_wave))
 
 # region of residence
 ## residence comparing Swiss population with CoMix data:
@@ -404,7 +406,7 @@ for (w in unique(data_reg$panel_wave)) {
     summarise(part_num = length(grossregion)
     )%>%
     ungroup()
-  x$precent <- round(x$part_num/sum(x$part_num)*100,2)
+  x$precent <- round(x$part_num/sum(x$part_num)*100,1)
   for (r in x$grossregion) {
     residence_table[residence_table$Residence==r,w] <- paste0(format(as.numeric(x[x$grossregion == r,2]), nsmall=0, big.mark=",")," (",x[x$grossregion == r,3],"%)")
   }
@@ -413,7 +415,7 @@ residence_table[,3] <- paste0(format(residence_table[,3], nsmall=0, big.mark=","
 residence_table[,4] <- paste0(format(residence_table[,4], nsmall=0, big.mark=",")," (", round(residence_table[,4]/sum(residence_table[,4])*100,1),"%)")
 residence_table[is.na(residence_table)] <- " "
 residence_table[1,1] <- "Residence"
-colnames(residence_table) <- c("Category","Name", "Population size (precent)","Participants number (precent)", levels(data_reg$panel_wave))
+colnames(residence_table) <- c("Category","Name", "Swiss population, n (%)","Study participants, n (%)", levels(data_reg$panel_wave))
 
 table2_pop_part <-rbind(gender_table, age_table, income_table, residence_table)
 write.csv(table2_pop_part, "../../tables/vaccination_uptake/SupTable1.csv")
@@ -489,7 +491,7 @@ panel_wave <- cbind(panel_wave,panel_wave_reg[,2])
 
 panel_wave$num_part <- format(panel_wave$num_part, nsmall=0, big.mark=",")
 
-colnames(panel_wave) <- c("Survey wave", "Start date", "End date", "Number of participants", "Number of new enrollments","Number of missing participants \nwho had been previously enrolled","Number of returning participants \nafter missing at least one wave", "Number of participants \nwith no missing variables")
+colnames(panel_wave) <- c("Survey wave", "Start date, year-month-day", "End date, year-month-day", "Number of participants", "Number of newly enrolled participants","Number of missing participants \nwho had been previously enrolled","Number of returning participants \nafter missing at least one wave", "Number of participants \nwith no missing variables")
 panel_wave = data.frame(lapply(panel_wave, as.character), stringsAsFactors=FALSE)
 write.csv(panel_wave, "../../tables/vaccination_uptake/Table1.csv")
 

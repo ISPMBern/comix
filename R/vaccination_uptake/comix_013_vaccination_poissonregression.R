@@ -111,7 +111,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   }
   
   table_study_pop[1,1] <- "Total"
-  table_study_pop[,1][table_study_pop[,1]==categories[2]] <- "Age Groups (years)"
+  table_study_pop[,1][table_study_pop[,1]==categories[2]] <- "Age groups, years"
   table_study_pop[,1][table_study_pop[,1]==categories[3]] <- "Gender"
   table_study_pop[,1][table_study_pop[,1]==categories[4]] <- "Region"
   table_study_pop[,1][table_study_pop[,1]==categories[5]] <- "Swiss regions"
@@ -126,13 +126,13 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   table_study_pop[,1][table_study_pop[,1]==categories[14]] <- "Perception of COVID-19 measures"
   
   table_study_pop[41:43,1] <- paste0(table_study_pop[41:43,1]," CHF")
-  table_study_pop[48,1] <- paste0("No risk group")
-  table_study_pop[49,1] <- paste0("Risk group")
+  table_study_pop[48,1] <- paste0("No person in a risk group")
+  table_study_pop[49,1] <- paste0("One or more person in a risk group")
   
   table_study_pop <- sapply(table_study_pop, function(x) gsub(" (0%)"," (<1%)", x, useBytes = TRUE,fixed = TRUE))
   table_study_pop[is.na(table_study_pop)] <- " "
   
-  write.csv(table_study_pop[,c(1:3)], "../../figures/vaccination_uptake/Table2.csv")
+  write.csv(table_study_pop[,c(1:3)], "../../tables/vaccination_uptake/Table2.csv")
   
   #Vaccination in study population
   data_reg <- data_reg %>% group_by(part_id) %>% arrange(date_num)  %>% mutate(t_dif_log = log(c(min(date_num),diff(date_num))), t_dif_log_sensitivity = log(c(min(date_num-sensitivity_date),diff(date_num-sensitivity_date))))
@@ -368,7 +368,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[5,2] <- paste0(names(table(data_reg$panel_wave)[6]))
   output_unadj[5,"N answers"] <- paste0(table(data_reg$panel_wave)[6])
   
-  output_unadj[6,1] <- paste0("Age groups (years) \nReference: ",names(table(data_reg$age_bands)[1]))
+  output_unadj[6,1] <- paste0("Age groups, years \nReference: ",names(table(data_reg$age_bands)[1]))
   output_unadj[6,2] <- paste0(names(table(data_reg$age_bands)[2]))
   output_unadj[6,"N participants"] <- paste0(table(data_reg$age_bands[!duplicated(data_reg$part_id)])[2])
   output_unadj[6,"N answers"] <- paste0(table(data_reg$age_bands)[2])
@@ -489,7 +489,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[29,"N participants"] <- paste0(table(data_reg$employment_cat[!duplicated(data_reg$part_id)])[6])
   output_unadj[29,"N answers"] <- paste0(table(data_reg$employment_cat)[6])
   
-  output_unadj[30,1] <- paste0("Household\nReference: ",names(table(data_reg$household_income_3cat)[1])," CHF")
+  output_unadj[30,1] <- paste0("Household income, net\nReference: ",names(table(data_reg$household_income_3cat)[1])," CHF")
   output_unadj[30,2] <- paste0(names(table(data_reg$household_income_3cat)[2])," CHF")
   #output_unadj[30,2] <- paste0("Income of ", names(table(data_reg$household_income_3cat)[2])," compared to ",names(table(data_reg$household_income_3cat)[1]))
   output_unadj[30,"N participants"] <- paste0(table(data_reg$household_income_3cat[!duplicated(data_reg$part_id)])[2])
@@ -510,8 +510,8 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[33,"N participants"] <- paste0(round(mean(data_reg$household_size[!duplicated(data_reg$part_id)]))," (",min(data_reg$household_size[!duplicated(data_reg$part_id)])," - ",max(data_reg$household_size[!duplicated(data_reg$part_id)]),")")
   output_unadj[33,"N answers"] <- paste0(round(mean(data_reg$household_size))," (",min(data_reg$household_size)," - ",max(data_reg$household_size),")")
   
-  output_unadj[34,1] <- "  \nReference: Nonvulnerable  population"
-  output_unadj[34,2] <- "Vulnerable population"
+  output_unadj[34,1] <- "Vulnerability  \nReference: No person in a risk group"
+  output_unadj[34,2] <- "One or more person in a risk group"
   output_unadj[34,"N participants"] <- paste0(table(data_reg$household_riskgroup[!duplicated(data_reg$part_id)])[2])
   output_unadj[34,"N answers"] <- paste0(table(data_reg$household_riskgroup)[2])
   
@@ -594,7 +594,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   own <- fpTxtGp(label = gpar(cex=1),ticks = gpar(cex=1),summary=gpar(cex=1), xlab =gpar(cex=1), legend = gpar(cex=1.5),legend.title = gpar(cex=1), title = gpar(cex=1))# adjust text size of forestplot
   # adjust text size of forestplot
   setEPS()
-  pdf(paste0("../../figures/vaccination_uptake/Figur2.pdf"), width = 14, height = 18 )
+  pdf(paste0("../../figures/vaccination_uptake/Figure2.pdf"), width = 14, height = 18 )
   forestplot(tabletext, graph.pos=5, align = c("l","l","l","l","r","l","l"),
              legend =  c( "Unadjusted", "Adjusted"),
              legend_args = fpLegend(pos = list(x=0.5, y=1), 
