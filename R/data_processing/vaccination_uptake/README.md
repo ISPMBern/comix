@@ -17,18 +17,27 @@
 
 **R Code:**
 
-If you are interested in using the R code, please make sure:\\
-**1.** you installed all packages from R/comix_000_initialize.R\\
-**2.** You can run the code from R/01_data_mgmt.R\\
-	**2.1** R/vaccination_uptake/comix_010_cleaning_regression.R\\
-	Prepares the data for the regression models, includes the inverse probability weighting analysis, describes the data\\
-	**2.1.1** R/vaccination_uptake/comix_011_vaccination_coxpropreg.R\\
-	Includes the Cox proportional hazard regression model to analyse the vaccine uptake\\
-	**2.1.2** R/vaccination_uptake/comix_012_missingparticipating.R\\
-	Includes the logistic regression model to analyse the missigness (not attending in all survey waves after recruitment)\\
-	**2.1.3** R/vaccination_uptake/comix_013_vaccination_poissonregression.R\\
-	Includes the point process using Poisson regression model to analyse the vaccine uptake\\
-	
+If you are interested in using the R code, please make sure:
+
+**1.** you installed all packages from R/comix_000_initialize.R
+
+**2.** You can run the code from R/01_data_mgmt.R
+
+**2.1** R/vaccination_uptake/comix_010_cleaning_regression.R:
+Prepares the data for the regression models, includes the inverse probability weighting analysis, describes the data
+
+**2.1.1** R/vaccination_uptake/comix_011_vaccination_coxpropreg.R:
+Includes the Cox proportional hazard regression model to analyse the vaccine uptake
+
+**2.1.2** R/vaccination_uptake/comix_012_missingparticipating.R:
+Includes the logistic regression model to analyse the missigness (not attending in all survey waves after recruitment)
+
+**2.1.3** R/vaccination_uptake/comix_013_vaccination_poissonregression.R:
+Includes the point process using Poisson regression model to analyse the vaccine uptake
+
+**2.1.4** R/vaccination_uptake/comix_014_vaccination_coxpropreg_exactdates.R:
+Includes the Cox proportional hazard regression model to analyse the vaccine uptake of a sub-dataset
+
 
 **Results:** We recorded 6,758 observations from 1,884 adults. For the regression analysis, we included 3,513 observations from 1,883 participants. By September 2021, 600 (75\%) of 806 study participants had received at least one vaccine dose. Participants who were older, male, and students, had a higher education, household income, and number of social contacts, and lived in a household with a medically vulnerable person were more likely to have received at least one vaccine dose. Female participants, those who lived in rural areas and smaller households, and people who perceived COVID-19 measures as being too strict were less likely to be vaccinated. We found no significant association between previous SARS-CoV-2 infections and vaccination uptake.
 
@@ -37,6 +46,6 @@ If you are interested in using the R code, please make sure:\\
 **Keywords:** Vaccine, COVID-19, contact survey, social contact, socio-demographic characteristics, Switzerland
 
 
-Please cite: [Reichmuth et al. 2023]()
+Please cite: [Reichmuth et al. 2023](https://doi.org/10.1101/2023.03.13.23287183)
 	
 	
