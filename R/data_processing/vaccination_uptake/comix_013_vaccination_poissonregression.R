@@ -5,25 +5,44 @@
 #' ---
 
 
-comix_013_vaccination_poissonregression = function(data_reg) {
+comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
   ##############################################
   # point process using poisson regression 
   ##############################################
+  #data_reg <- comixdata_reg
   wave_reg<- data_reg %>% 
     group_by(panel_wave) %>% 
     summarise(mean=mean(vaccinated))
   
   data_reg$unvaccinated <- ifelse(data_reg$vaccinated==1, 0, 1)
-  
+  # prepare dates and file
   sensitivity_date <- as.numeric(as_date("2021-06-01") - as_date("2021-01-01"))
   data_reg <- data_reg[order(data_reg$part_id ),]
   data_reg <- data_reg[order(data_reg$date_num ),]
+  #get overview of waves
   panel_date <- data_reg %>%  group_by(panel_wave) %>% 
     summarise(min_date = min(date_num), 
               max_date = max(date_num),
               mid_date = median(as.numeric(min_date:max_date))) %>% ungroup()
   
-  # describe study population
+  
+  #Vaccination in study population (prepare data for regression model)
+  data_reg <- data_reg %>% group_by(part_id) %>% arrange(date_num)  %>% mutate(t_dif_log = log(c(min(date_num),diff(date_num))), t_dif_log_sensitivity = log(c(min(date_num-sensitivity_date),diff(date_num-sensitivity_date))))
+  data_reg <- data_reg %>% group_by(part_id) %>% filter(date_num<=timetoevent | is.na(timetoevent)) 
+  
+  
+  ## Overview of study population in point process (panel B)
+  paste0("Number of data points in point process: ", length((data_reg$part_id)))
+  paste0("Number of paricipants in point process: ", length(unique(data_reg$part_id)))
+  paste0("Female ",length(unique(data_reg$part_id[data_reg$sex%in%"Female"])), "(", round(length(unique(data_reg$part_id[data_reg$sex%in%"Female"]))/length(unique(data_reg$part_id))*100),
+         "%); Male ",length(unique(data_reg$part_id[data_reg$sex%in%"Male"])),"(",round(length(unique(data_reg$part_id[data_reg$sex%in%"Male"]))/length(unique(data_reg$part_id))*100),"%)")
+  paste0("Age of paricipants in point process: ", paste(quantile(as.numeric(data_reg$age_part[!duplicated(data_reg$part_id)])),collapse = "; "))
+  paste0("Number of paricipants that : ",paste0 (names(table(data_reg$drops[!duplicated(data_reg$part_id)])), " ",
+                                                 table(data_reg$drops[!duplicated(data_reg$part_id)])," (",
+                                                 round(table(data_reg$drops[!duplicated(data_reg$part_id)])/length(data_reg$drops[!duplicated(data_reg$part_id)])*100),
+                                                 "%)",collapse="; "))
+  
+  
   table_study_pop <- data.frame(matrix(NA,  ncol = 15))
   colnames(table_study_pop) <- c("Category", "All participants, n (%)", "Vaccinated participants, n (%)", "Observations in B1","Observations from participants that have been  vaccinated in B1", "Observations in B2","Observations from participants that have been vaccinated in B2","Observations in B3", "Observations from participants that have beenvaccinated in B3","Observations in B4","Observations from participants that have been  vaccinated in B4", "Observations in B5", "Observations from participants that have been vaccinated in B5", "Observations in B6","Observations from participants that have been  vaccinated in B6")
   table_study_pop <- table_study_pop[-1,]
@@ -110,43 +129,8 @@ comix_013_vaccination_poissonregression = function(data_reg) {
     }
   }
   
-  table_study_pop[1,1] <- "Total"
-  table_study_pop[,1][table_study_pop[,1]==categories[2]] <- "Age groups, years"
-  table_study_pop[,1][table_study_pop[,1]==categories[3]] <- "Gender"
-  table_study_pop[,1][table_study_pop[,1]==categories[4]] <- "Region"
-  table_study_pop[,1][table_study_pop[,1]==categories[5]] <- "Swiss regions"
-  table_study_pop[,1][table_study_pop[,1]==categories[6]] <- "Country of birth"
-  table_study_pop[,1][table_study_pop[,1]==categories[7]] <- "Education level"
-  table_study_pop[,1][table_study_pop[,1]==categories[8]] <- "Employment status"
-  table_study_pop[,1][table_study_pop[,1]==categories[9]] <- "Household income"
-  table_study_pop[,1][table_study_pop[,1]==categories[10]] <- "Household size"
-  table_study_pop[,1][table_study_pop[,1]==categories[11]] <- "Household with vulnerability"
-  table_study_pop[,1][table_study_pop[,1]==categories[12]] <- "Testing for SARS-Cov-2"
-  table_study_pop[,1][table_study_pop[,1]==categories[13]] <- "Number of contacts"
-  table_study_pop[,1][table_study_pop[,1]==categories[14]] <- "Perception of COVID-19 measures"
+
   
-  table_study_pop[41:43,1] <- paste0(table_study_pop[41:43,1]," CHF")
-  table_study_pop[48,1] <- paste0("No person in a risk group")
-  table_study_pop[49,1] <- paste0("One or more person in a risk group")
-  
-  table_study_pop <- sapply(table_study_pop, function(x) gsub(" (0%)"," (<1%)", x, useBytes = TRUE,fixed = TRUE))
-  table_study_pop[is.na(table_study_pop)] <- " "
-  
-  write.csv(table_study_pop[,c(1:3)], "../../tables/vaccination_uptake/Table2.csv")
-  
-  #Vaccination in study population
-  data_reg <- data_reg %>% group_by(part_id) %>% arrange(date_num)  %>% mutate(t_dif_log = log(c(min(date_num),diff(date_num))), t_dif_log_sensitivity = log(c(min(date_num-sensitivity_date),diff(date_num-sensitivity_date))))
-  data_reg <- data_reg %>% group_by(part_id) %>% filter(date_num<=timetoevent | is.na(timetoevent)) 
-  ## Overview of study population in point process (panel B)
-  paste0("Number of data points in point process: ", length((data_reg$part_id)))
-  paste0("Number of paricipants in point process: ", length(unique(data_reg$part_id)))
-  paste0("Female ",length(unique(data_reg$part_id[data_reg$sex%in%"Female"])), "(", round(length(unique(data_reg$part_id[data_reg$sex%in%"Female"]))/length(unique(data_reg$part_id))*100),
-         "%); Male ",length(unique(data_reg$part_id[data_reg$sex%in%"Male"])),"(",round(length(unique(data_reg$part_id[data_reg$sex%in%"Male"]))/length(unique(data_reg$part_id))*100),"%)")
-  paste0("Age of paricipants in point process: ", paste(quantile(as.numeric(data_reg$age_part[!duplicated(data_reg$part_id)])),collapse = "; "))
-  paste0("Number of paricipants that : ",paste0 (names(table(data_reg$drops[!duplicated(data_reg$part_id)])), " ",
-                                                 table(data_reg$drops[!duplicated(data_reg$part_id)])," (",
-                                                 round(table(data_reg$drops[!duplicated(data_reg$part_id)])/length(data_reg$drops[!duplicated(data_reg$part_id)])*100),
-                                                 "%)",collapse="; "))
   for (n in 1:2) {
     output_x <- c()
     for(i in c("panel_wave","age_bands",output_tte[[1]])){
@@ -263,9 +247,13 @@ comix_013_vaccination_poissonregression = function(data_reg) {
     }
   }
   
+  
   # sensitivity analysis changing start of study to 1 June
-  mod_multi_sensitivity <- glm(formula = vaccinated ~ panel_wave:age_bands + .  - t_dif_log_sensitivity, offset(t_dif_log_sensitivity),
-                               family = poisson(link = "log"),data = data_reg[,c("vaccinated", "t_dif_log_sensitivity", dependend_variables)])
+  mod_multi_sensitivity <- glm(formula = vaccinated ~  panel_wave*age_bands+ sex + region + grossregion + 
+                                 country_cat_birth + education_level3 + employment_cat + 
+                                 household_income_3cat +  household_size+ household_riskgroup + 
+                                 prehistory + contact_cat + agreement_measures_3cat,offset(t_dif_log_sensitivity),
+                               family = poisson(link = "log"),data = data_reg)
   lrtest(mod_multi, mod_multi_sensitivity)$`Pr(>Chisq)`[2]
   sum_reg <- summary(mod_multi_sensitivity)
   output <- data.frame(matrix(0, ncol = 8, nrow = length(names(mod_multi_sensitivity$coefficients))))
@@ -282,19 +270,9 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output$RRCI <- paste0(format(round(output$RR,2), nsmall = 2), " (", format(round(output$CI.2.5.,2), nsmall = 2), "-", format(round(output$CI.97.5.,2), nsmall = 2), ")")
   output_jun <- output
   
-  mod_interaction <- glm(
-    formula = vaccinated ~ panel_wave*age_bands,offset(t_dif_log),
-    family = poisson(link = "log"),
-    data = data_reg)
-  output <- summary(mod_interaction)
-  output <- as.data.frame(mod_interaction$coefficients)
-  output$RR <- exp(coef(mod_interaction))
-  output$se <- qnorm(0.975) * sqrt(diag(vcov(mod_interaction))) 
-  mod_interaction <-output
-  mod_interaction$rates_panel <- c(exp(mod_interaction[1,1]),exp(mod_interaction[1,1]+mod_interaction[-1,1]))
-  mod_interaction$rates_CI2.5 <- c(exp(mod_interaction[1,1]-mod_interaction$se[1]),exp(mod_interaction[1,1]+mod_interaction[-1,1]-mod_interaction$se[-1]))
-  mod_interaction$rates_CI97.5 <- c(exp(mod_interaction[1,1]+mod_interaction$se[1]),exp(mod_interaction[1,1]+mod_interaction[-1,1]+mod_interaction$se[-1]))
   
+  
+  #Figure 3 (vaccination rates for age groups)
   output <- summary(mod_multi)
   output <- as.data.frame(mod_multi$coefficients)
   output$RR <- exp(coef(mod_multi))
@@ -305,39 +283,47 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   mod_multi$rates_CI97.5 <- c(exp(mod_multi[1,1]+mod_multi$se[1]),exp(mod_multi[1,1]+mod_multi[-1,1]+mod_multi$se[-1]))
   remove(output)
   for(i in unlist(panel_date[-1,1])){
-    mod_interaction[grepl(i,rownames(mod_interaction)),"mid_date"] <- panel_date$mid_date[panel_date$panel_wave==i]
+    mod_multi[grepl(i,rownames(mod_multi)),"mid_date"] <- panel_date$mid_date[panel_date$panel_wave==i]
   }
-  mod_interaction$mid_date[is.na(mod_interaction$mid_date)] <- as_date(unlist(panel_date[1,"mid_date"]))
-  mod_interaction$age_bands <- gsub("^.*\\[", "", rownames(mod_interaction))
-  mod_interaction$age_bands <- sub(".*(70\\+)", "\\1", mod_interaction$age_bands )
-  mod_interaction$age_bands[grepl("panel_wave",mod_interaction$age_bands)] <- "18,30)"
-  mod_interaction$age_bands[1] <- "18,30)"
-  
-  
-  mod_multi$mid_date <- mod_interaction$mid_date 
-  mod_multi$age_bands <- mod_interaction$age_bands 
-  mod_interaction$model <- "Unadjusted*"
+  mod_multi$mid_date[is.na(mod_multi$mid_date)] <- as_date(unlist(panel_date[1,"mid_date"]))
+  mod_multi$age_bands <- gsub("^.*\\[", "", rownames(mod_multi))
+  mod_multi$age_bands <- sub(".*(70\\+)", "\\1", mod_multi$age_bands )
+  mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18,30)"
+  mod_multi$age_bands[1] <- "18,30)"
   mod_multi$model <- "Adjusted"
-  mod_interaction<- rbind(mod_interaction[,c("mid_date","age_bands", "rates_panel","rates_CI2.5", "rates_CI97.5","model")],mod_multi[,c("mid_date","age_bands", "rates_panel","rates_CI2.5", "rates_CI97.5","model")])
+  mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)] <- paste0("[",mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)])
+  mod_multi$age_bands <- factor(mod_multi$age_bands, levels(data_reg$age_bands))
   
-  mod_interaction$model <- factor(mod_interaction$model, levels=c("Unadjusted*", "Adjusted"))
-  mod_interaction$age_bands[!grepl("\\b[+]",mod_interaction$age_bands)] <- paste0("[",mod_interaction$age_bands[!grepl("\\b[+]",mod_interaction$age_bands)])
-  mod_interaction$age_bands <- factor(mod_interaction$age_bands, levels(data_reg$age_bands))
+  mod_multi$panel_wave <- gsub('^.*\\panel_wave','',rownames(mod_multi))
+  mod_multi$panel_wave <- gsub(':.*','',mod_multi$panel_wave)
+  mod_multi$panel_wave[grepl("ntercept|age", mod_multi$panel_wave)] <- "B1"
+  mod_multi$panel_wave <- factor(mod_multi$panel_wave, levels(data_reg$panel_wave))
   
-  plot_time<- ggplot(data = mod_interaction) +
+  plot_time<- ggplot(data = mod_multi) +
     theme_minimal()+
     facet_wrap(vars(age_bands))+#  facet_wrap(vars(model))+
-    geom_line(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel*100, group=model, color=model), linewidth=0.6) +#http://sape.inf.usi.ch/quick-reference/ggplot2/linetype #linetype="dashed"
-    geom_point(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel*100, group=model, color=model), size=1) +
-    geom_ribbon(aes(x = as_date(mid_date+as_date("2022-01-01")), y = rates_panel*100, ymin=rates_CI2.5*100, ymax=rates_CI97.5*100, group=model, fill=model),alpha=0.2)+
+    geom_line(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), linewidth=0.6) +#http://sape.inf.usi.ch/quick-reference/ggplot2/linetype #linetype="dashed"
+    geom_point(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), size=1) +
+    geom_ribbon(aes(x = as_date(mid_date+as_date("2022-01-01")), y = rates_panel, ymin=rates_CI2.5, ymax=rates_CI97.5, group=model, fill=model),alpha=0.2)+
     scale_color_manual(name=" ",values = c(col_9[1:2]))+#c(col_9[1:6]))+
     scale_fill_manual(name=" ",values = c(col_9[1:2]))+#c(col_9[1:6]))+
     theme(legend.position = 'bottom')+ 
-    scale_y_continuous(labels = function(x) paste0(x, "%"))+
+    scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
     guides(fill=guide_legend(nrow=2,byrow=TRUE),color=guide_legend(nrow=2,byrow=TRUE))+
     labs(tag="",subtitle = bquote(), x = "", y ="Vaccination rate")
-  print(plot_time)
-  ggsave(plot_time, filename = paste0("../../figures/vaccination_uptake/Figure3.png"), height =4, width = 6,  bg = "transparent")
+  ggsave(plot_time, filename = paste0("./output/figures/vaccination_uptake/Figure3.png"), height =4, width = 6,  bg = "transparent")
+  
+  plot_time_age<-ggplot(data = mod_multi) +
+    theme_minimal()+
+    geom_point(aes(x=panel_wave,y=rates_panel, color=age_bands), position=position_dodge(width=0.8), size=2) +
+    geom_errorbar(aes(x = panel_wave, y = rates_panel, ymin=rates_CI2.5, ymax=rates_CI97.5, color=age_bands),position=position_dodge(width=0.8))+
+    theme(legend.position = 'bottom')+ 
+    scale_color_manual(name=" ",values = c(col_9[c(3:5,7,8)], "aquamarine3"))+
+    scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
+    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination rate")
+  ggsave(plot_time_age, filename = paste0("./output/figures/vaccination_uptake/SupFig3.png"), height =3, width = 5,  bg = "transparent")
+  
+  
   
   
   # Due to interaction age and wave outcome in adjusted models not meaningful: Adapt tables accordingly:
@@ -348,6 +334,8 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_adj_interaction <-rbind(age_wave_NA,output_adj_interaction)
   output_jun <-rbind(age_wave_NA,output_jun)
   
+  
+  # label regression output
   output_unadj[1,1] <- paste0("Survey wave\nReference: ",names(table(data_reg$panel_wave)[1]))
   output_unadj[1,2] <- paste0(names(table(data_reg$panel_wave)[2]))
   output_unadj[1,"N answers"] <- paste0(table(data_reg$panel_wave)[2])
@@ -409,7 +397,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[13,"N participants"] <-  paste0(table(data_reg$region[!duplicated(data_reg$part_id)])[2])
   output_unadj[13,"N answers"] <-  paste0(table(data_reg$region)[2])
   
-  output_unadj[14,1] <-paste0("Swiss regions","\nReference: ",names(table(data_reg$grossregion)[1]))
+  output_unadj[14,1] <-paste0("Swiss regions of residence","\nReference: ",names(table(data_reg$grossregion)[1]))
   output_unadj[14,2] <-  paste0(names(table(data_reg$grossregion)[2]))
   output_unadj[14,"N participants"] <-  paste0(table(data_reg$grossregion[!duplicated(data_reg$part_id)])[2])
   output_unadj[14,"N answers"] <-  paste0(table(data_reg$grossregion)[2])
@@ -510,8 +498,8 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[33,"N participants"] <- paste0(round(mean(data_reg$household_size[!duplicated(data_reg$part_id)]))," (",min(data_reg$household_size[!duplicated(data_reg$part_id)])," - ",max(data_reg$household_size[!duplicated(data_reg$part_id)]),")")
   output_unadj[33,"N answers"] <- paste0(round(mean(data_reg$household_size))," (",min(data_reg$household_size)," - ",max(data_reg$household_size),")")
   
-  output_unadj[34,1] <- "Vulnerability  \nReference: No person in a risk group"
-  output_unadj[34,2] <- "One or more person in a risk group"
+  output_unadj[34,1] <- paste0("Household with medically vulnerability \nReference: ",names(table(data_reg$household_riskgroup)[1]))
+  output_unadj[34,2] <- paste0("", names(table(data_reg$household_riskgroup)[2]))#"One or more person in a risk group"
   output_unadj[34,"N participants"] <- paste0(table(data_reg$household_riskgroup[!duplicated(data_reg$part_id)])[2])
   output_unadj[34,"N answers"] <- paste0(table(data_reg$household_riskgroup)[2])
   
@@ -527,7 +515,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[37,2] <- paste0(names(table(data_reg$prehistory)[4]))
   output_unadj[37,"N answers"] <- paste0(table(data_reg$prehistory)[4])
   
-  output_unadj[38,1] <- paste0("Number of contacts\nReference: ",names(table(data_reg$contact_cat)[1]))
+  output_unadj[38,1] <- paste0("Number of contacts per day\nReference: ",names(table(data_reg$contact_cat)[1]))
   output_unadj[38,2] <- paste0(names(table(data_reg$contact_cat)[2]))
   output_unadj[38,"N answers"] <- paste0(table(data_reg$contact_cat)[2])
   
@@ -535,7 +523,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[39,2] <- paste0(names(table(data_reg$contact_cat)[3]))
   output_unadj[39,"N answers"] <- paste0(table(data_reg$contact_cat)[3])
   
-  output_unadj[40,1] <- paste0("Perception of COVID-19 measures \nReference: ",names(table(data_reg$agreement_measures_3cat)[1]))
+  output_unadj[40,1] <- paste0("Attitudes towards COVID-19 measures \nReference: ",names(table(data_reg$agreement_measures_3cat)[1]))
   output_unadj[40,2] <- paste0(names(table(data_reg$agreement_measures_3cat)[2]))
   output_unadj[40,"N answers"] <- paste0(table(data_reg$agreement_measures_3cat)[2])
   
@@ -551,17 +539,18 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   output_unadj[-c(1:5,33,35:42),c(11)] <- format(as.numeric(output_unadj[-c(1:5,33,35:42),c(11)]), nsmall=0, big.mark=",")
   
   
-  #Overall table
+  
+  
+  #combine table
   output_adj_interaction[,c(1,2,10,11)] <- output_unadj[,c(1,2,10,11)]
   output_poissonreg<- cbind(output_unadj[,c(1,2,10,11)],output_unadj[,c(8,9)],output_unadj_interaction[,c(8,9)],output_adj[,c(8,9)],output_adj_interaction[,c(8,9)],output_jun[,c(8,9)])
   
   
   colnames(output_poissonreg) <- c("Categories","Variables","N answers","N participants","P-value of unadjusted model","Unadjusted RR","P-value of unadjusted model with age as interaction","Unadjusted RR with age as interaction","P-value of adjusted RR","Adjusted RR","P-value of adjusted RR with age as interaction","Adjusted RR with age as interaction","P-value of adjusted RR with age as interaction (1 June)","Adjusted RR with age as interaction (1 June)")
-  output_poissonreg[is.na(output_poissonreg)] <- "-"
-  write.csv(output_poissonreg, "../../tables/vaccination_uptake/Table2.csv")
-  # table of unadjusted and adjusted
+  output_poissonreg[is.na(output_poissonreg)] <- "-"# table of unadjusted and adjusted
   
-  #Figure (forestplot) of RR
+  
+  #Figure 2 (forestplot) of RR
   output_unadj$model <- "Unadjusted"
   output_adj_interaction$model <- "Adjusted"
   binded_regression <- rbind(output_unadj, output_adj_interaction)
@@ -594,7 +583,7 @@ comix_013_vaccination_poissonregression = function(data_reg) {
   own <- fpTxtGp(label = gpar(cex=1),ticks = gpar(cex=1),summary=gpar(cex=1), xlab =gpar(cex=1), legend = gpar(cex=1.5),legend.title = gpar(cex=1), title = gpar(cex=1))# adjust text size of forestplot
   # adjust text size of forestplot
   setEPS()
-  pdf(paste0("../../figures/vaccination_uptake/Figure2.pdf"), width = 14, height = 18 )
+  pdf(paste0("./output/figures/vaccination_uptake/Figure2.pdf"), width = 14, height = 18 )
   forestplot(tabletext, graph.pos=5, align = c("l","l","l","l","r","l","l"),
              legend =  c( "Unadjusted", "Adjusted"),
              legend_args = fpLegend(pos = list(x=0.5, y=1), 
@@ -628,6 +617,84 @@ comix_013_vaccination_poissonregression = function(data_reg) {
              boxsize= c(0.12),lwd.ci=4, ci.vertices=TRUE, ci.vertices.height = 0.1)
   
   dev.off()
+  
+  
+  
+  
+  # describe study population
+  data_reg <- data_reg[order(data_reg$date_num, decreasing = TRUE),]
+  data_reg <- data_reg[!duplicated(data_reg$part_id),]
+  
+  table_study_pop <- data.frame(matrix(NA,  ncol = 3))
+  colnames(table_study_pop) <- c("Category", "All participants, N (%)", "Vaccinated participants, N (%)")
+  table_study_pop <- table_study_pop[-1,]
+  categories <- c("Total","age_bands",output_tte[[1]])
+  for(j in 1:length(categories)){
+    if(j ==1){
+      data_reg_table <- as.data.frame(data_reg[,c("part_id","panel_wave","vaccinated","sex")])
+      l <- c(length(table_study_pop[,1])+1)
+      table_levels <- 1
+    }
+    if(j !=1){
+      c <- categories[j]
+      data_reg_table <- as.data.frame(data_reg[,c("part_id","panel_wave","vaccinated",c)])
+      l <- c(length(table_study_pop[,1])+1)
+      if(is.numeric(data_reg_table[,4])){
+        table_levels <- c
+        table_study_pop[l,1] <- c
+        table_study_pop[(l+1),1] <- paste0("Median ", "(Range)")
+      }
+      if(!is.numeric(data_reg_table[,4])){
+        table_levels <- levels(data_reg_table[,4])
+        table_study_pop[l,1] <- c
+        table_study_pop[c((l+1):((l)+length(table_levels))),1] <- table_levels 
+      }
+    }
+    for(i in (1+l):(l+length(table_levels))){
+      
+      if(sum(is.numeric(data_reg_table[,4]))>0){
+        table_study_pop[i,2] <- paste0(quantile(data_reg_table[,4])[3]," (range: ",quantile(data_reg_table[,4])[1],"-",quantile(data_reg_table[,4])[5],")")
+        table_study_pop[i,3] <- paste0(quantile(data_reg_table[,4][data_reg_table$vaccinated %in% 1])[3]," (range: ",quantile(data_reg_table[,4][data_reg_table$vaccinated %in% 1])[1],"-",quantile(data_reg_table[,4][data_reg_table$vaccinated %in% 1])[5],")")
+           }
+      
+      if(sum(!is.numeric(data_reg_table[,4]))>0){
+        table_levels <- levels(data_reg_table[,4])
+        if(j ==1){
+          i <- i-1
+          k <- table_levels
+        }
+        if(j !=1){
+          k <- table_levels[i-l]
+        }
+        
+        table_study_pop[i,2] <- paste0(format(length(data_reg_table$part_id[data_reg_table[,4]%in% k]), nsmall=0, big.mark=","), " (",round(length(data_reg_table$part_id[data_reg_table[,4]%in%k])/length(data_reg_table$part_id)*100), "%)" )
+        table_study_pop[i,3] <- paste0(format(length(data_reg_table$part_id[data_reg_table$vaccinated %in% 1 & data_reg_table[,4]%in%k]), nsmall=0, big.mark=","), " (",round(length(data_reg_table$part_id[data_reg_table$vaccinated %in% 1 & data_reg_table[,4]%in%k])/length(data_reg_table$part_id[data_reg_table$vaccinated %in% 1])*100), "%)" )
+       }      
+    }
+  }
+  
+  table_study_pop[1,1] <- "Total"
+  table_study_pop[,1][table_study_pop[,1]==categories[2]] <- "Age groups, years"
+  table_study_pop[,1][table_study_pop[,1]==categories[3]] <- "Gender"
+  table_study_pop[,1][table_study_pop[,1]==categories[4]] <- "Region"
+  table_study_pop[,1][table_study_pop[,1]==categories[5]] <- "Swiss region of residence"
+  table_study_pop[,1][table_study_pop[,1]==categories[6]] <- "Country of birth"
+  table_study_pop[,1][table_study_pop[,1]==categories[7]] <- "Education level"
+  table_study_pop[,1][table_study_pop[,1]==categories[8]] <- "Employment status"
+  table_study_pop[,1][table_study_pop[,1]==categories[9]] <- "Household income, net"
+  table_study_pop[,1][table_study_pop[,1]==categories[10]] <- "Household size"
+  table_study_pop[,1][table_study_pop[,1]==categories[11]] <- "Household with medically vulnerability"
+  table_study_pop[,1][table_study_pop[,1]==categories[12]] <- "Testing for SARS-Cov-2"
+  table_study_pop[,1][table_study_pop[,1]==categories[13]] <- "Number of contacts per day"
+  table_study_pop[,1][table_study_pop[,1]==categories[14]] <- "Attitudes towards COVID-19 measures"
+  
+  table_study_pop[41:43,1] <- paste0(table_study_pop[41:43,1]," CHF")
+  
+  table_study_pop <- sapply(table_study_pop, function(x) gsub(" (0%)"," (<1%)", x, useBytes = TRUE,fixed = TRUE))
+  table_study_pop[is.na(table_study_pop)] <- " "
+  
+  #write.csv(table_study_pop[,c(1:3)], "./output/tables/vaccination_uptake/Table2.csv")
+  
   
   return(output_poissonreg)
 }

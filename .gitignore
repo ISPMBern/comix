@@ -1,5 +1,9 @@
 *.DS_Store
 *RData
+*backup
 *backups
 *Rhistory
 *manuscript
+*raw
+*data
+*age_matrices
