@@ -8,7 +8,7 @@ comix_012_missingparticipating = function(data_reg) {
   ##############################################
   # Association of missing surveys on primary outcome (vaccination uptake)
   ##############################################
-  
+  #data_reg <- comixdata_reg
   # get last observation of each participant incl in regression model
   data_reg_last_id <- data_reg %>% 
     group_by(part_id) %>% 
@@ -48,7 +48,7 @@ comix_012_missingparticipating = function(data_reg) {
     }
     if(n==2){
       log_reg <-  glm(missing ~   . ,
-                      data= data_reg_last_id[,c("missing",variables[-c(11,13:14)])])
+                      data= data_reg_last_id[,c("missing",variables[-c(11:14)])])
     }
     s <- summary(log_reg, corr = TRUE)
     output <- data.frame(matrix(0, ncol = 8, nrow =length(names(coef(log_reg)))))
@@ -81,7 +81,7 @@ comix_012_missingparticipating = function(data_reg) {
   output <- data.frame(matrix(NA, ncol = 7, nrow =length(output_adj)))
   colnames(output) <- c("Category","Variables","Number participants","Number observations", "Univariable OR (95%-CI)", "aOR (95% CI) without time varying variables", "aOR (95% CI) with time varying variables")
   
-  output[1,1] <- paste0("Age groups (years) \nReference: ",names(table(data_reg_last_id$age_bands)[1]))
+  output[1,1] <- paste0("Age groups, years \nReference: ",names(table(data_reg_last_id$age_bands)[1]))
   output[1,2] <- paste0(names(table(data_reg_last_id$age_bands)[2]))
   output[1,"Number participants"] <- paste0(table(data_reg_last_id$age_bands[!duplicated(data_reg_last_id$part_id)])[2])
   output[1,"Number observations"] <- paste0(table(data_reg_last_id$age_bands)[2])
@@ -202,7 +202,7 @@ comix_012_missingparticipating = function(data_reg) {
   output[24,"Number participants"] <- paste0(table(data_reg_last_id$employment_cat[!duplicated(data_reg_last_id$part_id)])[6])
   output[24,"Number observations"] <- paste0(table(data_reg_last_id$employment_cat)[6])
   
-  output[25,1] <- paste0("Net household income\nReference: ",names(table(data_reg_last_id$household_income_3cat)[1])," CHF")
+  output[25,1] <- paste0("Household income, net\nReference: ",names(table(data_reg_last_id$household_income_3cat)[1])," CHF")
   output[25,2] <- paste0(names(table(data_reg_last_id$household_income_3cat)[2])," CHF")
   output[25,"Number participants"] <- paste0(table(data_reg_last_id$household_income_3cat[!duplicated(data_reg_last_id$part_id)])[2])
   output[25,"Number observations"] <- paste0(table(data_reg_last_id$household_income_3cat)[2])
@@ -217,33 +217,32 @@ comix_012_missingparticipating = function(data_reg) {
   output[27,"Number participants"] <- paste0(table(data_reg_last_id$household_income_3cat[!duplicated(data_reg_last_id$part_id)])[4])
   output[27,"Number observations"] <- paste0(table(data_reg_last_id$household_income_3cat)[4])
   
-  output[28,1] <- " "
-  output[28,2] <- paste0("Household size")
+  output[28,1] <- "Household size "
+  output[28,2] <- paste0("Mean (range)")
   output[28,"Number participants"] <- paste0(round(mean(data_reg_last_id$household_size[!duplicated(data_reg_last_id$part_id)]))," (",min(data_reg_last_id$household_size[!duplicated(data_reg_last_id$part_id)])," - ",max(data_reg_last_id$household_size[!duplicated(data_reg_last_id$part_id)]),")")
   output[28,"Number observations"] <- paste0(round(mean(data_reg_last_id$household_size))," (",min(data_reg_last_id$household_size)," - ",max(data_reg_last_id$household_size),")")
   
-  output[29,1] <- "  \nReference: Nonvulnerable  population"
-  output[29,2] <- "Medically vulnerable population"
+  output[29,1] <- paste0("Household with medically vulnerability  \nReference:", names(table(data_reg_last_id$household_riskgroup)[1]))
+  output[29,2] <- paste0(names(table(data_reg_last_id$household_riskgroup)[2]))
   output[29,"Number participants"] <- paste0(table(data_reg_last_id$household_riskgroup[!duplicated(data_reg_last_id$part_id)])[2])
   output[29,"Number observations"] <- paste0(table(data_reg_last_id$household_riskgroup)[2])
   
-  output[30,1] <- paste0("Testing for SARS-CoV-2\nReference: ",names(table(data_reg_last_id$prehistory)[1]))
-  output[30,2] <- paste0(names(table(data_reg_last_id$prehistory)[2]))
-  output[30,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[2])
+  output[30,1] <- "Vaccination status\nReference: Not vaccinated "
+  output[30,2] <- paste0("Vaccinated")
+  #output[30,"Number participants"] <- paste0(table(data_reg_last_id$vaccinated)[2])
+  output[30,"Number observations"] <- paste0(table(data_reg_last_id$vaccinated)[2])
   
-  output[31,1] <- " "
-  output[31,2] <- paste0(names(table(data_reg_last_id$prehistory)[3]))
-  output[31,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[3])
+  output[31,1] <- paste0("Testing for SARS-CoV-2\nReference: ",names(table(data_reg_last_id$prehistory)[1]))
+  output[31,2] <- paste0(names(table(data_reg_last_id$prehistory)[2]))
+  output[31,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[2])
   
   output[32,1] <- " "
-  output[32,2] <- paste0(names(table(data_reg_last_id$prehistory)[4]))
-  output[32,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[4])
+  output[32,2] <- paste0(names(table(data_reg_last_id$prehistory)[3]))
+  output[32,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[3])
   
-  output[33,1] <- "Vaccination status\nReference: Not vaccinated "
-  output[33,2] <- paste0("Vaccinated")
-  output[33,"Number participants"] <- paste0(table(data_reg_last_id$vaccinated)[2])
-  output[33,"Number observations"] <- paste0(table(data_reg_last_id$vaccinated)[2])
-  
+  output[33,1] <- " "
+  output[33,2] <- paste0(names(table(data_reg_last_id$prehistory)[4]))
+  output[33,"Number observations"] <- paste0(table(data_reg_last_id$prehistory)[4])
   
   output[34,1] <- paste0("Number of contacts per day\nReference: ",names(table(data_reg_last_id$contact_cat)[1]))
   output[34,2] <- paste0(names(table(data_reg_last_id$contact_cat)[2]))
@@ -277,7 +276,7 @@ comix_012_missingparticipating = function(data_reg) {
   output[5] <- output_unadj$oddsCI
   output[6] <- output_adj_novariablex$oddsCI
   output[7] <- output_adj_variablex$oddsCI
-  
+  output[is.na(output)] <- "-"
   write.csv(output, "./output/tables/vaccination_uptake/SupTable5.csv")
   return(output)
 }

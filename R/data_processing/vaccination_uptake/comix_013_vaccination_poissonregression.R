@@ -286,13 +286,19 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
     mod_multi[grepl(i,rownames(mod_multi)),"mid_date"] <- panel_date$mid_date[panel_date$panel_wave==i]
   }
   mod_multi$mid_date[is.na(mod_multi$mid_date)] <- as_date(unlist(panel_date[1,"mid_date"]))
-  mod_multi$age_bands <- gsub("^.*\\[", "", rownames(mod_multi))
-  mod_multi$age_bands <- sub(".*(70\\+)", "\\1", mod_multi$age_bands )
-  mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18,30)"
-  mod_multi$age_bands[1] <- "18,30)"
+  #mod_multi$age_bands <- gsub("^.*\\[", "", rownames(mod_multi))
+  #mod_multi$age_bands <- sub(".*(70\\+)", "\\1", mod_multi$age_bands )
+  #mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18,30)"
+  #mod_multi$age_bands[1] <- "18,30)"
+  #mod_multi$model <- "Adjusted"
+  #mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)] <- paste0("[",mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)])
+  #mod_multi$age_bands <- factor(mod_multi$age_bands, levels(data_reg$age_bands))
+  mod_multi$age_bands <- gsub(".*\\_bands", "", rownames(mod_multi))
+  mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18-29"
+  mod_multi$age_bands[1] <- "18-29"
   mod_multi$model <- "Adjusted"
-  mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)] <- paste0("[",mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)])
-  mod_multi$age_bands <- factor(mod_multi$age_bands, levels(data_reg$age_bands))
+  mod_multi$age_bands <- paste0(mod_multi$age_bands, " years")
+  mod_multi$age_bands <- factor(mod_multi$age_bands, paste0(levels(data_reg$age_bands), " years"))
   
   mod_multi$panel_wave <- gsub('^.*\\panel_wave','',rownames(mod_multi))
   mod_multi$panel_wave <- gsub(':.*','',mod_multi$panel_wave)
@@ -305,12 +311,12 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
     geom_line(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), linewidth=0.6) +#http://sape.inf.usi.ch/quick-reference/ggplot2/linetype #linetype="dashed"
     geom_point(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), size=1) +
     geom_ribbon(aes(x = as_date(mid_date+as_date("2022-01-01")), y = rates_panel, ymin=rates_CI2.5, ymax=rates_CI97.5, group=model, fill=model),alpha=0.2)+
-    scale_color_manual(name=" ",values = c(col_9[1:2]))+#c(col_9[1:6]))+
-    scale_fill_manual(name=" ",values = c(col_9[1:2]))+#c(col_9[1:6]))+
+    scale_color_manual(name=" ",values = c(col_9[2]))+#c(col_9[1:6]))+
+    scale_fill_manual(name=" ",values = c(col_9[2]))+#c(col_9[1:6]))+
     theme(legend.position = 'bottom')+ 
     scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
     guides(fill=guide_legend(nrow=2,byrow=TRUE),color=guide_legend(nrow=2,byrow=TRUE))+
-    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination rate")
+    labs(tag="",subtitle = bquote(), x = "", y =" Vaccination uptake per interval")
   ggsave(plot_time, filename = paste0("./output/figures/vaccination_uptake/Figure3.png"), height =4, width = 6,  bg = "transparent")
   
   plot_time_age<-ggplot(data = mod_multi) +
@@ -320,7 +326,7 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
     theme(legend.position = 'bottom')+ 
     scale_color_manual(name=" ",values = c(col_9[c(3:5,7,8)], "aquamarine3"))+
     scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
-    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination rate")
+    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination uptake per interval")
   ggsave(plot_time_age, filename = paste0("./output/figures/vaccination_uptake/SupFig3.png"), height =3, width = 5,  bg = "transparent")
   
   
@@ -493,8 +499,8 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
   output_unadj[32,"N participants"] <- paste0(table(data_reg$household_income_3cat[!duplicated(data_reg$part_id)])[4])
   output_unadj[32,"N answers"] <- paste0(table(data_reg$household_income_3cat)[4])
   
-  output_unadj[33,1] <- " "
-  output_unadj[33,2] <- paste0("Household size")
+  output_unadj[33,1] <- "Household size "
+  output_unadj[33,2] <- paste0("Mean (range)")
   output_unadj[33,"N participants"] <- paste0(round(mean(data_reg$household_size[!duplicated(data_reg$part_id)]))," (",min(data_reg$household_size[!duplicated(data_reg$part_id)])," - ",max(data_reg$household_size[!duplicated(data_reg$part_id)]),")")
   output_unadj[33,"N answers"] <- paste0(round(mean(data_reg$household_size))," (",min(data_reg$household_size)," - ",max(data_reg$household_size),")")
   

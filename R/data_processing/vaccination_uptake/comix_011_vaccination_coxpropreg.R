@@ -88,7 +88,7 @@ comix_011_vaccination_coxpropreg = function(data_reg) {
   output_unadj_ipw <-rbind(waves_NA,output_unadj_ipw)
   
   output_tte1<- cbind(output_adj[,1],output_unadj[,c(6,7)],output_unadj_ipw[,c(6,7)],output_adj[,c(6,7)],output_adj_ipw[,c(6,7)])
-  output_tte1[is.na(output_tte1)] <- " "
+  output_tte1[is.na(output_tte1)] <- "-"
   colnames(output_tte1) <- c("Name", "P-value of unadjusted HR","Unadjusted HR","P-value of unadjusted weighted HR","Unadjusted weighted HR","P-value of adjusted HR", "Adjusted HR","P-value of adjusted weighted HR","Adjusted weighted HR")
   return(list(model_variables,output_tte1))
   

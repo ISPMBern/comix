@@ -210,8 +210,8 @@ comix_014_vaccination_coxpropreg_exactdates = function(data_reg) {
   output_unadj[32,"Factor"] <- paste0("", names(table(data_reg$household_income_3cat)[4]))
   output_unadj[32,"N answers"] <- paste0(table(data_reg$household_income_3cat)[4])
   
-  output_unadj[33,1] <- " "
-  output_unadj[33,"Factor"] <- paste0("Household size")
+  output_unadj[33,1] <- "Household size "
+  output_unadj[33,"Factor"] <- paste0("Mean (range)")
   output_unadj[33,"N answers"] <- paste0(round(mean(data_reg$household_size))," (",min(data_reg$household_size)," - ",max(data_reg$household_size),")")
   
   output_unadj[34,1] <- paste0("Household with medically vulnerability \nReference: ",names(table(data_reg$household_riskgroup)[1]))

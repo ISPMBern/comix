@@ -118,7 +118,8 @@ comix_010_cleaning_regression = function(comixdata_part) {
   table_vaccination <- data_reg %>% group_by(lower.age.limit) %>%
     summarise(table_vaccination = sum(na.omit(vaccinated))) %>% 
     ungroup 
-  table_vaccination$part_age_group <- c("[18,30)", "[30,40)", "[40,50)","[50,60)", "[60,70)", "70+")
+  #table_vaccination$part_age_group <- c("[18,30)", "[30,40)", "[40,50)","[50,60)", "[60,70)", "70+")
+  table_vaccination$part_age_group <- c("18-29", "30-39", "40-49","50-59", "60-69", "70+")
   colnames(table_vaccination) <- c("Age group", "Number of vaccinated")
   
   bag_weekly <- swiss_pop_data[[1]]#swiss_pop_data[[2]]
@@ -210,19 +211,21 @@ comix_010_cleaning_regression = function(comixdata_part) {
 #quantile(na.omit(data_reg$no_contacts), probs = c(0.33,0.66))
 fun <- function(x){
   if(is.na(x)){return(NA)}
-  else if(x<3){return("[0,3)")}
-  else if(x>=3 &x<6){return("[3,6)")}
+  else if(x<3){return("0-2")}
+  else if(x>=3 &x<6){return("3-5")}
   else if(x>=6){return("6+")}
 }
 data_reg$contact_cat <- sapply(data_reg$no_contacts, fun)
-data_reg$contact_cat <- factor(data_reg$contact_cat, order = FALSE, levels = c("[0,3)","[3,6)","6+"))
+#data_reg$contact_cat <- factor(data_reg$contact_cat, order = FALSE, levels = c("[0,3)","[3,6)","6+"))
+data_reg$contact_cat <- factor(data_reg$contact_cat, order = FALSE, levels = c("0-2","3-5","6+"))
 data_reg$agreement_measures_3cat <- gsub("[1-9] ","", data_reg$agreement_measures_3cat)
 data_reg$agreement_measures_3cat <- factor(data_reg$agreement_measures_3cat, levels=gsub("[1-9] ","", levels(comixdata_part$agreement_measures_3cat)))
 data_reg$grossregion <- factor(data_reg$grossregion, order = FALSE, levels = c(names(table(data_reg$grossregion))[rev(order(table(data_reg$grossregion)))]))
 data_reg$panel_wave <- factor(data_reg$panel_wave, levels=unique(data_reg$panel_wave)[order(gsub("B","",unique(data_reg$panel_wave)))])
 data_reg$lower.age.limit <- as.factor(data_reg$lower.age.limit)
 data_reg$age_bands <- recode(data_reg$lower.age.limit, 
-                                "0"= "[0,5)", "5"="[5,11)", "12"="[12,18)", "18"="[18,30)", "30"="[30,40)", "40"="[40,50)","50"="[50,60)", "60"="[60,70)", "70"="70+")
+                             "0"= "0-4", "5"="5-11", "12"="12-17", "18"="18-29", "30"="30-39", "40"="40-49","50"="50-59", "60"="60-69", "70"="70+")
+ #                              "0"= "[0,5)", "5"="[5,11)", "12"="[12,18)", "18"="[18,30)", "30"="[30,40)", "40"="[40,50)","50"="[50,60)", "60"="[60,70)", "70"="70+")
 Fun_prehistory <- function(x){
   panel_wave_id <- data_reg$pos[data_reg$panel_wave_id ==x]
   wave <- data_reg$wave[data_reg$panel_wave_id ==x]
@@ -234,14 +237,14 @@ Fun_prehistory <- function(x){
   if(sum(tests[length(tests)] %in% "Not tested")>0 & sum(tests %in% "Negative")>0){return("Negative")}
   if(sum(tests %in% "Positive")>0){return("Positive")}
   else return(as.character(tests[length(tests)]))
+  
 }
-#data_reg$prehistory <- sapply(data_reg$panel_wave_id, Fun_prehistory)
-data_reg$prehistory <- data_reg$plos 
+data_reg$prehistory <- sapply(data_reg$panel_wave_id, Fun_prehistory)
+#data_reg$prehistory <- data_reg$pos 
 data_reg$prehistory <- ifelse(data_reg$prehistory=="Prefer not to answer","Preferred not to answer",as.character(data_reg$prehistory))
-data_reg$prehistory <- recode(data_reg$prehistory, Positive = "COVID-19 history", Tested = "No confirmed COVID-19 history", 
-                              Negative = "No confirmed COVID-19 history", `Not tested`="Not tested for COVID-19", `Preferred not to answer`="Preferred not to answer")
-data_reg$prehistory <- factor(data_reg$prehistory, levels=c("COVID-19 history","No confirmed COVID-19 history","Not tested for COVID-19","Preferred not to answer"))
-
+data_reg$prehistory <- recode(data_reg$prehistory, Positive = "Tested positive", Tested = "Tested", 
+                              Negative = "Tested", `Not tested`="Never tested", `Preferred not to answer`="Preferred not to answer")
+data_reg$prehistory <- factor(data_reg$prehistory, levels=c("Tested positive","Tested","Never tested","Preferred not to answer"))
 
 data_reg$date_num <-as.numeric(data_reg$date)
 data_reg <-  data_reg[(order(data_reg$date_num)),]
@@ -343,7 +346,7 @@ for (w in unique(data_reg$panel_wave)) {
     gender_table[gender_table$Gender==r,w] <- paste0(format(as.numeric(x[x$sex == r,c(2)]), nsmall=0, big.mark=",")," (",x[x$sex == r,c(3)],"%)")
   }
 }
-gender_table[c(1,1),3] <- paste0(format(gender_table[c(1,2),3],nsmall=0, big.mark=",")," (", round(gender_table[c(1,2),3]/sum(gender_table[c(1,2),3])*100,1),"%)")
+gender_table[c(1,2),3] <- paste0(format(gender_table[c(1,2),3],nsmall=0, big.mark=",")," (", round(gender_table[c(1,2),3]/sum(gender_table[c(1,2),3])*100,1),"%)")
 gender_table[,4] <- paste0(format(gender_table[,4],nsmall=0, big.mark=",")," (", round(gender_table[,4]/sum(gender_table[,4])*100,1),"%)")
 gender_table[is.na(gender_table)] <- " "
 gender_table[1,1] <- "Gender"
@@ -423,7 +426,7 @@ residence_table[1,1] <- "Residence"
 colnames(residence_table) <- c("Category","Name", "Swiss population, n (%)","Study participants, n (%)", levels(data_reg$panel_wave))
 
 table2_pop_part <-rbind(gender_table, age_table, income_table, residence_table)
-write.csv(table2_pop_part, "./output/tables/vaccination_uptake/SupTable3.csv")
+write.csv(table2_pop_part, "./output/tables/vaccination_uptake/SupTable2.csv")
 
 
 # variables in the model
@@ -510,8 +513,8 @@ colnames(panel_wave) <- c("Survey wave", "Start date, year-month-day", "End date
 panel_wave = data.frame(lapply(panel_wave, as.character), stringsAsFactors=FALSE)
 write.csv(panel_wave, "./output/tables/vaccination_uptake/Table1.csv")
 
-return(data_reg)
 
+data_reg1 <- data_reg
 # describe study population
 data_reg <- data_reg[order(data_reg$date_num, decreasing = TRUE),]
 data_reg <- data_reg[!duplicated(data_reg$part_id),]
@@ -586,4 +589,9 @@ table_study_pop[is.na(table_study_pop)] <- " "
 
 write.csv(table_study_pop[,c(1:3)], "./output/tables/vaccination_uptake/Table2.csv")
 
+
+
+data_reg <- data_reg1
+
+return(data_reg)
 }

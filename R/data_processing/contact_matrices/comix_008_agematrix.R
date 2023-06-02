@@ -30,7 +30,6 @@ comix_008_agematrix = function() {
   }
   pop_sentinella <- data.frame(lower.age.limit = age_sentinella, population = pop)$population
   
-  
   ### Social contact matrix from Prem et al. (2021)
   # Source: "https://github.com/kieshaprem/synthetic-contact-matrices/generate_synthetic_matrices/output/syntheticmatrices/contact_all.rdata
   load("./data/raw/contact_all.rdata")
@@ -61,6 +60,7 @@ comix_008_agematrix = function() {
     } 
   }
   
+  #change matrices to be reciprocal
   reciprocal <- function(m, N) {
     m_rec <- m
     for(i in 1:length(N)) {
@@ -76,33 +76,16 @@ comix_008_agematrix = function() {
   prem_2021_df <- as.data.frame(melt(prem_2021, varnames = c("participant_age","contact_age"), value.name = "contacts"))
   prem_2021_df$participant_age <- factor(prem_2021_df$participant_age, levels=age_sentinella_cat)
   prem_2021_df$contact_age <- factor(prem_2021_df$contact_age, levels=age_sentinella_cat)
-  
-  ggplot(prem_2021_df, aes(y = contact_age, x = participant_age, fill = contacts)) + 
-    theme_minimal()+
-    geom_tile()+
-    geom_text(aes(label = sprintf("%0.2f", round(contacts,2)))) +
-    scale_fill_gradientn(limits=c(0,10),
-                         colors = c( "white","steelblue"),
-                         na.value = col_9[9])+
-    labs(subtitle = " ",
-         x = "Age of participant (years)",
-         y = "Age of contact (years)",
-         fill = "Number of contacts (per day)")
 
-  prem_2021_sum <- as.data.frame(rowSums(prem_2021))
+  prem_2021_sum <- as.data.frame(rowSums(prem_2021)) # get sum of contacts per day 
   colnames(prem_2021_sum) <- "contact_sum"
   
   prem_2021_sum$participant_age <- rownames(prem_2021_sum)
   prem_2021_sum$participant_age <- factor(prem_2021_sum$participant_age, levels=  age_sentinella_cat)
   
   
-  ### Swiss CoMix age-matrices
-  
-  ## Get CoMix data:
-  #either from zenodo
-  # comix <- get_survey("https://doi.org/10.5281/zenodo.6542656") # change to new doi
-
-  #or from local
+  ## Get Swiss CoMix data:
+  # comix <- get_survey("https://doi.org/10.5281/zenodo.6542656")   # from zenodo
   part_df <- read.csv("./data/processed/zenodo/CoMix_ch_participant_common.csv",row.names = 1)
   part_df1 <- read.csv("./data/processed/zenodo/CoMix_ch_participant_extra.csv",row.names = 1)
   part_df2 <- read.csv("./data/processed/zenodo/CoMix_ch_sday.csv",row.names=1)
@@ -110,34 +93,22 @@ comix_008_agematrix = function() {
   
   participants <- cbind(part_df1,part_df2[,-c(1)])
   participants <- merge(part_df,participants, by="part_id")
-  #participants$country <- "Switzerland"
   
   cont_df <- read.csv("./data/processed/zenodo/CoMix_ch_contact_common.csv",row.names = 1)
   cont_df1 <- read.csv("./data/processed/zenodo/CoMix_ch_contact_extra.csv",row.names = 1)
   cont_df2 <- read.csv("./data/processed/zenodo/CoMix_ch_hh_common.csv",row.names = 1)
-  #cont_df1$cont_id <- as.character(cont_df1$cont_id)
-  #cont_df$cont_id <- as.character(cont_df$cont_id)
-  #contacts <- cbind(cont_df,cont_df1[,!colnames(cont_df1) %in% c( "cont_id","cnt_gender", "cnt_freq", "cnt_place")])
   contacts <- merge(cont_df,cont_df1, by=c("cont_id"))
-  #contacts$part_id <- as.character(contacts$part_id)
-  #participants$part_id <- as.character(participants$part_id)
   
   comix <- socialmixr::survey(
     participants =   participants,
     contacts =   contacts)
   comix <- clean(comix)
   
-  
   # truncate at 50 contacts 
   comix$contacts <- comix$contacts %>% group_by(part_id) %>% slice_sample(n=50,replace = FALSE)
   
-  #get lower.age.limit
-  #comix$contacts$cnt_age_est_min <- as.numeric(comix$contacts$cnt_age_est_min)
-  #comix$contacts$cnt_age_est_max <- as.numeric(comix$contacts$cnt_age_est_max)
-  #comix$contacts$lower.age.limit <- as.numeric(comix$contacts$cnt_age_est_min)
-
   # define age groups "age_band" (as age_sentinella) for participants
-  age_sentinella_fig1 <- c(0, 5, 15, 18, 30, 65)
+  age_sentinella_fig1 <- c(0, 5, 15, 18, 30, 65) # for crude estimates as CoMix separated age and adult waves
   comix$participants <- comix$participants %>%
     group_by(part_id) %>%
     mutate(age_band =  max(age_sentinella[part_age >= age_sentinella]),
@@ -146,33 +117,27 @@ comix_008_agematrix = function() {
   comix$participants <- merge(comix$participants, merge(comix$contacts %>% group_by(part_id) %>% reframe(sum_contacts = length(part_id)),comix$participants[,c("part_id")], by="part_id", all.y =T) %>% mutate(sum_contacts = replace_na(sum_contacts, 0)), all.x =T)
   
   # get mean contacts for participants
-  # all ages combined
-  unadj_mean_contacts_all <-  comix$participants %>% group_by(panel_wave) %>%
+  unadj_mean_contacts_all <-  comix$participants %>% group_by(panel_wave) %>%  # all ages combined
     reframe(mean_contacts = round(mean(sum_contacts),1),
             CI_up = round(mean(sum_contacts)+qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1),
             CI_low = round(mean(sum_contacts)-qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1))
   
-  # for age_sentinella
-  unadj_mean_contacts_age_sentinella <- comix$participants %>% group_by(panel_wave,age_band_fig1) %>%
+  unadj_mean_contacts_age_sentinella <- comix$participants %>% group_by(panel_wave,age_band_fig1) %>%   # by ages groups
     reframe(mean_contacts = round(mean(sum_contacts),1),
             CI_up = round(mean(sum_contacts)+qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1),
             CI_low = round(mean(sum_contacts)-qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1))
-    
-  
   unadj_mean_contacts_age_sentinella$mCI <- paste0(sprintf("%0.2f", round(unadj_mean_contacts_age_sentinella$mean_contacts,1)), " (95%-CI: ",unadj_mean_contacts_age_sentinella$CI_low,"-",unadj_mean_contacts_age_sentinella$CI_up,")")
- 
   unadj_mean_contacts_age_sentinella$age_band_fig1 <- recode(unadj_mean_contacts_age_sentinella$age_band_fig1, "0"= "[0,5)", "5"= "[5,15)","15"="[15,18)","18"="[18,30)", "30"="[30,65)","65"="65+")
   unadj_mean_contacts_age_sentinella$age_band_fig1 <- factor(unadj_mean_contacts_age_sentinella$age_band_fig1, levels= c("[0,5)", "[5,15)","[15,18)","[18,30)","[30,65)","65+"))
   
-  # get overview df for comix waves
+  # creat data frame for overview of the survey waves
   panel_wave_df <- comix$participants %>% group_by(panel_wave) %>%
                                  summarise(time_panel_wave = paste0(format(as_date(min(sday_id)),format = "%d %B %Y")," to ", format(as_date(max(sday_id)),format = "%d %B %Y")),
                                            max_time = as_date(max(sday_id)),
                                            min_time = as_date(min(sday_id)),
-                                           mid_time = median(seq(min_time,max_time,1)),
+                                           mid_time = median(seq(min_time,max_time,1)), # careful using
                                            n_part = length(unique(part_id)),
                                            n_cont = sum(sum_contacts))
-                               
   panel_wave_df$contactsCI <- paste0(sprintf("%0.2f", round(unadj_mean_contacts_all$mean_contacts,1))," (",unadj_mean_contacts_all$CI_low, "-", unadj_mean_contacts_all$CI_up,")")
   
   min_time <- min(panel_wave_df$min_time)
@@ -193,7 +158,6 @@ comix_008_agematrix = function() {
     scale_x_date(date_breaks= "1 month", date_labels = "%d-%b")+
     geom_point(data=unadj_mean_contacts_age_sentinella, aes(y = mean_contacts,x=mid_time, color=age_band_fig1),size = 2)+
     geom_errorbar(data=unadj_mean_contacts_age_sentinella, aes(xmin=min_time,xmax=max_time, ymin = CI_low, ymax = CI_up, y = mean_contacts,x=mid_time, color=age_band_fig1))+
-    
     geom_linerange(data=unadj_mean_contacts_age_sentinella, aes(xmin=min_time,xmax=max_time, y=mean_contacts, color=age_band_fig1),linewidth=3) +
     geom_line(data=unadj_mean_contacts_age_sentinella, aes(x=mid_time,  y=mean_contacts, color=age_band_fig1))+
     geom_text(data=unadj_mean_contacts_age_sentinella, aes(x=mid_time, y=0.1, label= panel_wave), colour= col_9[9], size=3) + 
@@ -204,13 +168,12 @@ comix_008_agematrix = function() {
     labs(tag="",x = "", y =bquote("Crude number of contacts \nper age group"))
   ggsave(fig1, filename = paste0("./output/figures/age_matrices/Figure1.png"), height = 5, width = 15,  bg = "transparent")
   
-  
   # generate age-contact matrices
   contact_red <- c()
   contact_red_sd <- c()
-  n_sample <- 100
+  n_sample <- 100 # number of bootstrapes (as using sampling method)
   for(p in unique(participants$panel[participants$survey_group=="adults"])){
-    l <- grep(p,unique(participants$panel[participants$survey_group=="adults"]))
+    l <- grep(p,unique(participants$panel[participants$survey_group=="adults"])) # chosing children waves
     if(p%in%"A"){
       pc <- c(p,"C")
     }
@@ -221,12 +184,10 @@ comix_008_agematrix = function() {
       pc <- c(p,"E")
     }
    
-    comix_survey <- comix
+  comix_survey <- comix # select the survey data
   comix_survey$participants <- comix_survey$participants %>% group_by %>% filter(panel %in% pc)
   levels(comix_survey$participants$part_age) <- age_sentinella
   dates <- paste0(format(as_date(min(comix_survey$participants$sday_id)),format = "%B %Y")," to ", format(as_date(max(comix_survey$participants$sday_id)),format = "%B %Y"))
-
-
 
  comix_matrix_sym <- replicate(n = n_sample,contact_matrix(comix_survey,
                                                            survey.pop =pop_year_i,
@@ -239,8 +200,8 @@ comix_008_agematrix = function() {
  m_r <- matrix(NA, nrow = n_sample, ncol = length(age_sentinella))
  for(i in 1:n_sample) m_r[i, ] <- rowSums(comix_matrix_sym[, i]$matrix)/prem_2021_sum$contact_sum
  
-  comix_matrix_sym_sd <- apply(abind(comix_matrix_sym["matrix", ], along=3), 1:2, sd)
-  comix_matrix_sym_mean <- apply(abind(comix_matrix_sym["matrix", ], along=3), 1:2, mean)
+  comix_matrix_sym_sd <- apply(abind(comix_matrix_sym["matrix", ], along=3), 1:2, sd) # sd from bootstraps
+  comix_matrix_sym_mean <- apply(abind(comix_matrix_sym["matrix", ], along=3), 1:2, mean) # mean from bootstraps
   comix_matrix_sym <-  comix_matrix_sym[,1]
   comix_matrix_sym$matrix <- comix_matrix_sym_mean
   comix_matrix_sym$matrix_sd <- comix_matrix_sym_sd
@@ -250,9 +211,8 @@ comix_008_agematrix = function() {
   suppressWarnings(rownames(contact_red)[length(contact_red[,1])] <- p)
   contact_red_sd <- rbind(contact_red_sd,comix_matrix_sym$reduction_sd)
   suppressWarnings(rownames(contact_red_sd)[length(contact_red_sd[,1])] <- p)
+  comix_matrix_sym$contact_sum <- rowSums(comix_matrix_sym$matrix)
   remove(m_r)
-  
-  comix_matrix_sym$contact_sum <- rowSums(comix_matrix_sym$matrix)#colSums(comix_matrix_sym$matrix)
   
   comix_matrix_sym$matrix <- melt(comix_matrix_sym$matrix, varnames = c("participant_age","contact_age"), value.name = "contacts")
   comix_matrix_sym$matrix[,1] <- rep(levels(comix_matrix_sym$matrix[,2]),length(levels(comix_matrix_sym$matrix[,2])))
@@ -267,7 +227,6 @@ comix_008_agematrix = function() {
   contact_sum$participant_age <- levels(comix_matrix_sym$matrix$contact_age)
   contact_sum$participant_age <- factor(contact_sum$participant_age, levels=levels(comix_matrix_sym$matrix$contact_age))
   
-  # contact reduction
   contact_s <- ggplot(contact_sum, aes(x=participant_age, y = contact_sum))+
     theme_minimal()+
     ylim(c(0,20))+
@@ -297,7 +256,6 @@ comix_008_agematrix = function() {
    }
   else if("F" %in% p){
     fig_panelF <- ggarrange(contact_s,contact_m_sym,ncol=2, nrow=1, common.legend = TRUE, legend="none")
-    
   }
  
   }
@@ -314,9 +272,9 @@ comix_008_agematrix = function() {
     geom_tile()+
     geom_text(aes(label = sprintf("%0.2f", round(contacts,2)))) +
     scale_fill_gradientn(limits=c(0,10),
-      colors = c( "white","steelblue"),
-      na.value = col_9[9])+
-    labs(subtitle = "Normalized to the Swiss population in 2021",#Normalized to Swiss population in 2021
+                         colors = c( "white","steelblue"),
+                         na.value = col_9[9])+
+    labs(subtitle = "Normalized to the Swiss population in 2021",
          x = "Age of participant (years)",
          y = "Age of contact (years)",
          fill = "Number of contacts (per day)")
@@ -325,35 +283,27 @@ comix_008_agematrix = function() {
   fig2 <- ggarrange(fig_syn, fig_panelA,fig_panelB,fig_panelF,ncol=1, nrow=4, common.legend = TRUE, legend="top")
   ggsave(fig2, filename = paste0("./output/figures/age_matrices/Figure2.png"), height = 15, width = 10,  bg = "transparent")
   
-  
-  # contact reduction
   colnames(contact_red) <- age_sentinella
   colnames(contact_red) <- recode(colnames(contact_red), "0"= "[0,5)", "5"= "[5,15)","15"="[15,30)", "30"="[30,65)","65"="65+")
-  
-  contact_red_df <-  melt(contact_red, varnames = c("panel", "age_sentinella"),value.name = "reduction")
+  contact_red_df <-  melt(contact_red, varnames = c("panel", "age_sentinella"),value.name = "reduction") # contact reduction
   contact_red_df$reduction_sd <-  melt(contact_red_sd, varnames = c("panel", "age_sentinella"),value.name = "reduction_sd")[,3]
-  contact_red_df$reduction_up <- contact_red_df$reduction + qnorm(0.975)*contact_red_df$reduction_sd
-  contact_red_df$reduction_low <- contact_red_df$reduction - qnorm(0.975)*contact_red_df$reduction_sd
-  
+  contact_red_df$reduction_up <- contact_red_df$reduction + qnorm(0.975)*contact_red_df$reduction_sd/sqrt(n_sample)
+  contact_red_df$reduction_low <- contact_red_df$reduction - qnorm(0.975)*contact_red_df$reduction_sd/sqrt(n_sample)
   
   fig3A <- ggplot(contact_red_df)+
     theme_minimal()+
     facet_wrap(~panel, ncol= 3)+
     geom_errorbar(aes(ymin=reduction_low,ymax=reduction_up, x=age_sentinella), color="steelblue")+
     geom_point(aes(y=reduction, x=age_sentinella), color="steelblue")+
-    #scale_color_manual(values=c(col_9), name="Age group")+
     geom_hline(yintercept=1)+
     labs(subtitle = " ",
          y = "Relative number of contacts",
          x = " ",
          color = "Age group")
   
-  
-  # largest eigenvalue over time
+  # largest eigenvalue of matrices:
   sr_prem_2021 <- abs(eigen(prem_reci)$values[1])
   round(sr_prem_2021, 2)
-  sr_syn_m_reci <- abs(eigen(syn_m_reci)$values[1])
-  round(sr_syn_m_reci, 2)
   sr_syn_m_reci <- abs(eigen(syn_m_reci)$values[1])
   round(sr_syn_m_reci, 2)
 
@@ -369,9 +319,7 @@ comix_008_agematrix = function() {
     comix_survey <- comix
     comix_survey$participants <- comix_survey$participants %>% filter(panel_wave %in% c(p,pc))
     levels(comix_survey$participants$part_age) <- age_sentinella
-    
     dates <- paste0(format(as_date(min(comix_survey$participants$sday_id)),format = "%B %Y")," to ", format(as_date(max(comix_survey$participants$sday_id)),format = "%B %Y"))
-    
   
     comix_matrix_sym<- replicate(n = n_sample,contact_matrix(comix_survey,
                                       survey.pop =pop_year_i,
@@ -390,33 +338,38 @@ comix_008_agematrix = function() {
     leig$panel_wave[min(grep("-",leig$value))] <- p
     leig$value[min(grep("-",leig$value))] <- abs(eigen(comix_matrix_sym$matrix)$values[1])
     
-    
-    comix_matrix_sym$contact_sum <- rowSums(comix_matrix_sym$matrix)#colSums(comix_matrix_sym$matrix)
+    comix_matrix_sym$contact_sum <- rowSums(comix_matrix_sym$matrix)
     comix_matrix_sym$matrix <- melt(comix_matrix_sym$matrix, varnames = c("participant_age", "contact_age"), value.name = "contacts")
     ages <- levels(comix_matrix_sym$matrix$contact_age)
     comix_matrix_sym$matrix$participant_age <- rep(ages,length(ages))
     comix_matrix_sym$matrix$participant_age <- factor(comix_matrix_sym$matrix$participant_age, levels=ages)
-
     
     comix_matrix1 <- comix_matrix_sym$matrix
     comix_matrix1$panels <- paste0(p," and ", pc)
     comix_matrix <- rbind(comix_matrix1, comix_matrix)
-    
+    rm(comix_matrix1)
     contact_sum1 <- as.data.frame(comix_matrix_sym$contact_sum)
     colnames(contact_sum1)<- c("contact_sum")
     contact_sum1$participant_age <- ages
     contact_sum1$participant_age <- factor(contact_sum1$participant_age, levels=ages)
     contact_sum1$panels <- paste0(p," and ", pc)
     contact_sum <- rbind(contact_sum1, contact_sum)
-  
+    rm(contact_sum1)
   }
   larg_eig$value <- as.numeric(larg_eig$value)
-
+  
+  
+  # plot overview of 
+  #geom_rect(data=unadj_mean_contacts_age_sentinella,  aes(xmin=min_time, xmax=max_time, ymin=0, ymax=max(mean_contacts)+1), color="transparent", fill="grey", alpha=0.3)+
+  
+  
+  # comparisons between largest eigen values and other values:
   
   # Plot largest Eigenvalue and KOF
   larg_eig<- merge(larg_eig, panel_wave_df, by="panel_wave")
   kof_ch <- swiss_pop_data[[3]] #strigency index
-  BAG_data <- swiss_pop_data[[1]]
+  BAG_data <- swiss_pop_data[[1]]# Swiss covid data per week
+  BAG_cases_canton_d <- swiss_pop_data[[11]]# Swiss covid data per day
   BAG_data <- BAG_data[BAG_data$geoRegion== "CH",]
   BAG_data$date <- as_date(BAG_data$date)
   BAG_data <- BAG_data %>% arrange(date) %>% mutate(vacdo = replace_na(vac_dos_num, 0), cum_vacdo = cumsum(vacdo),cum_vacdo_pre =cum_vacdo/unique(pop)[1]*100)
@@ -425,7 +378,10 @@ comix_008_agematrix = function() {
   ggsave(fig3A, filename = paste0("./output/figures/age_matrices/Figure3.png"), height = 4, width = 8,  bg = "transparent")
   
   
+  # change makes no sense to take only the mid 
   larg_eig$date <- larg_eig$mid_time
+  
+  
   larg_eig <- merge(larg_eig, kof_ch, by="date")
   
   # Fit EpiNow2
@@ -454,24 +410,21 @@ comix_008_agematrix = function() {
   BAG_cases_canton_d <- BAG_cases_canton_d[BAG_cases_canton_d$geoRegion== "CH",]
   reported_cases<- BAG_cases_canton_d[,c("date", "confirm")]
   reported_cases$date <- as_date(reported_cases$date)
-  reported_cases <- reported_cases[as_date(reported_cases$date) %in% seq(min(panel_wave_df$min_time),max(panel_wave_df$min_time),1),]
+  reported_cases <- reported_cases[as_date(reported_cases$date) %in% seq(min(panel_wave_df$min_time)-10,max(panel_wave_df$min_time),1),]
   
-  fit_epinow2_all <- c()
-  for(i in 1:length(reported_cases[,1])){
-    fit_epinow2 <- epinow(reported_cases = reported_cases[i:(30+i),],
-                          generation_time = generation_time,
-                          delays = delay_opts(incubation_period, reporting_delay),
-                          horizon = 0,
-                          verbose = FALSE)
-    fit_epinow2_all <- rbind(fit_epinow2$estimates$summarised[fit_epinow2$estimates$summarised$variable=="R",],fit_epinow2_all)
-  }
-  #fit_epinow2_all1 <- fit_epinow2_all
+  # run only once (takes time)
+  #fit_epinow2_all <- c()
+  #for(i in 1:length(reported_cases[,1])){
+  #  fit_epinow2 <- epinow(reported_cases = reported_cases[i:(30+i),],generation_time = generation_time,delays = delay_opts(incubation_period, reporting_delay),horizon = 0,verbose = FALSE)
+  #  fit_epinow2_all <- rbind(fit_epinow2$estimates$summarised[fit_epinow2$estimates$summarised$variable=="R",],fit_epinow2_all)
+  #}
   #write.csv(fit_epinow2_all,"./data/processed/epinow2/fit_comix_epinow2.csv")
   fit_epinow2 <- read.csv("./data/processed/epinow2/fit_comix_epinow2.csv")
   
   Re_epinow2 <- fit_epinow2[fit_epinow2$variable%in%"R",]
   Re_epinow2 <- Re_epinow2[Re_epinow2$type %in% "estimate",]
   Re_epinow2$date <- as_date(Re_epinow2$date)
+  Re_epinow2 <- Re_epinow2[as_date(Re_epinow2$date) %in% seq(min(panel_wave_df$min_time),max(panel_wave_df$min_time),1),]
   
   for(i in reported_cases$date){
     reported_cases$R_median[reported_cases$date ==i] <- median(Re_epinow2$median[Re_epinow2$date ==i])
@@ -522,9 +475,15 @@ comix_008_agematrix = function() {
   
   
   # largest eigen value from Swiss CoMix data
-  fig4b<- ggplot()+
+  test <- as.data.frame(c(larg_eig$min_time, larg_eig$max_time))
+  colnames(test) <- c("min_time")
+  test <- merge(test, larg_eig[c("min_time","value")],by="min_time",all=TRUE)
+  colnames(test) <- c("max_time")
+  test <- merge(test, larg_eig[c("max_time","value")],by="max_time", x.all=TRUE)
+  
+  fig4b<- ggplot(test)+
     theme_minimal()+
-    geom_line(data= larg_eig,aes(x= mid_time, y=value),col="steelblue",linewidth = 2) +
+    geom_line(data= test,aes(x= max_time, y=value),col="steelblue",linewidth = 2) +
     scale_x_date(date_breaks = "3 month", 
                  date_labels = "%b\n%Y",
                  limits = as_date(c(min_time,max_time)))+
@@ -541,7 +500,7 @@ comix_008_agematrix = function() {
                  limits = as_date(c(min_time,max_time)))+
     labs(x = "", y = bquote(italic("R"["e"])), color = "") 
   #Re and Largest Eigen-value
-  fig4d<-ggplot(data= larg_eig,aes(y=value, x=median))+
+  fig4d<-ggplot(data= larg_eig,aes(y=value, x=R_median))+
     theme_minimal()+
     geom_smooth( method='lm', formula = y ~ x, col=col_9[2])+
     theme(axis.title=element_text(size=10))+
@@ -558,6 +517,54 @@ comix_008_agematrix = function() {
     theme(axis.title=element_text(size=10))+
     scale_y_continuous(limits=c(0,100))+
     labs(x = "", y = "Strigency index", color = "") 
+  #NPI
+  #https://www.bag.admin.ch/bag/en/home/krankheiten/ausbrueche-epidemien-pandemien/aktuelle-ausbrueche-epidemien/novel-cov/massnahmen-des-bundes.html (Access: 2021-07-19)
+  kof_plot <- ggplot(data= kof_ch)+
+    theme_minimal()+
+    geom_line(data= kof_ch,aes(x= date, y=ch.kof.stringency.ch.stringency_plus), col=col_9[9],size = 2) +
+    scale_x_date(date_breaks = "1 month", 
+                 date_labels = "%b",
+                 limits = as_date(c(time_window_plots[1],time_window_plots[2])))+
+    
+    annotate("pointrange", x = as_date("2020-10-19"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-19")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-19")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-19")]+17,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2020-10-19"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-19")]+20, label= "max 15 people",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2020-10-29"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-29")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-29")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-29")]-42,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2020-10-29"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-10-29")]-45, label= "max 10 people if private \notherwise 15 with mask",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2020-11-02"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-11-02")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-11-02")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-11-02")]+32,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2020-11-02"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-11-02")]+35, label= "Online learning \nat higher educational institutes",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2020-12-12"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-12")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-12")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-12")]+12,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2020-12-12"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-12")]+15, label= "Sperrstunde",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2020-12-21"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-21")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-21")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-21")]-32,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2020-12-21"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2020-12-21")]-35, label= "quarantine restrictions \non countries with Alpha",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-01-18"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-18")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-18")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-18")]+17,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2021-01-18"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-18")]+20, label= "mandatory home-office, \nmax 5 people, closures, etc.",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-01-28"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-28")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-28")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-28")]-7,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2021-01-28"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-01-28")]-10, label= "free testing",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-03-01"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-03-01")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-03-01")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-03-01")]-12,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2021-03-01"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-03-01")]-15, label= "max of 15 people outside, \nre-opening of all shops, \nleisure and sport activities \nbut mandatory mask wearing",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-04-07"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-07")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-07")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-07")]+27,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2021-04-07"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-07")]+30, label= "free self-tests",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-04-19"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-19")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-19")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-19")]-32,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2021-04-19"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-04-19")]-35, label= "further re-openings, \ne.g., restaurants outdoors \nbut with capacity limits",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-05-31"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-05-31")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-05-31")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-05-31")]+37,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =0, x=as_date("2021-05-31"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-05-31")]+40, label= "further re-openings, \ne.g., restaurants opened indoors",size=1.8,colour = "black") + 
+    
+    annotate("pointrange", x = as_date("2021-06-26"), y = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-06-26")], ymin = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-06-26")], ymax = kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-06-26")]-22,colour = col_9[9], size = 0.8)+
+    annotate("text",hjust =0.5,vjust =1, x=as_date("2021-06-26"), y=kof_ch$ch.kof.stringency.ch.stringency_plus[kof_ch$date==as_date("2021-06-26")]-25, label= "wide re-opening, \nbut with COVID certificate",size=1.8,colour = "black") + 
+    
+    scale_y_continuous(limits = c(0,100))+
+    labs(tag="",x = "", y =bquote("KOF Stringency-\nPlus Index"))
+  
   #Strigency index and Largest Eigen-value
   fig4f <- ggplot(data= larg_eig,aes(y=value, x=ch.kof.stringency.ch.stringency_plus))+
     theme_minimal()+
