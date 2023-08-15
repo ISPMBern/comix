@@ -54,7 +54,13 @@ matrix_plot(m$matrix,
 
 ## Publications
 The following publications include data from the CoMix survey in Switzerland:
-1. [Socio-demographic characteristics associated with COVID-19 vaccination uptake in Switzerland: longitudinal analysis of the CoMix study](https://doi.org/10.1101/2023.03.13.23287183). Reichmuth M L, Heron L, Riou J, Moser A, Hauser A, Low N, Althaus CL. medRxiv. 2023.
+
+<li><a href="https://doi.org/10.1186/s12889-023-16405-0">
+Socio-demographic characteristics associated with COVID-19 vaccination uptake in Switzerland: longitudinal analysis of the CoMix study.</a>
+Reichmuth ML, Heron L, Riou J, Moser A, Hauser A, Low N, Althaus CL.
+<strong>BMC Public Health</strong>. 2023 Aug 10;23(1):1523.</li>
+
+1. [Socio-demographic characteristics associated with COVID-19 vaccination uptake in Switzerland: longitudinal analysis of the CoMix study](https://doi.org/10.1186/s12889-023-16405-0). Reichmuth ML, Heron L, Riou J, Moser A, Hauser A, Low N, Althaus CL. BMC Public Health. 2023 Aug 10;23(1):1523.
 2. [Pregnancy during COVID-19: social contact patterns and vaccine coverage of pregnant women from CoMix in 19 European countries](https://doi.org/10.1186/s12884-022-05076-1). Wong KLM, Gimma A, Paixao ES; CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jarvis CI, Edmunds WJ. BMC Pregnancy Childbirth. 2022 Oct 8;22(1):757.
 3. [Social contact patterns during the COVID-19 pandemic in 21 European countries – evidence from a two-year study](https://doi.org/10.1186/s12879-023-08214-y). Wong KL, Gimma A, Coletti P, CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI. BMC Infect Dis. 2023 Apr 26;23(1):268.
 4. [The influence of COVID-19 risk perception and vaccination status on the number of social contacts across Europe: insights from the CoMix study](https://doi.org/10.1101/2022.11.25.22282676). Wambua J, Loedy N, Jarvis CI, Wong KL, Faes C, Grah R, Prasse B, Sandmann F, Niehus R, Johnson H, Edmunds WJ, Beutels P, Hens N, Coletti P. medRxiv. 2022.
