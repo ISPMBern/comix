@@ -22,11 +22,11 @@ install.packages("socialmixr")
 The data from the first 16 survey waves of the Swiss CoMix study can be downloaded using the function `get_survey()`:
 ```r
 library(socialmixr)
-library(tidyverse)
 comix <- get_survey("https://doi.org/10.5281/zenodo.6542656")
 ```
 The `contact_matrix()` function extracts a contact matrix from survey data and contact matrices can be plotted using the function `matrix_plot()`:
 ```r
+library(tidyverse)
 comix$participants <- comix$participants %>% filter(panel %in% c("A", "C"))
 m <- contact_matrix(comix,
                     age.limits = c(0, 5, 15, 30, 65),
