@@ -61,6 +61,10 @@ The following publications include data from the CoMix survey in Switzerland:
 3. [Pregnancy during COVID-19: social contact patterns and vaccine coverage of pregnant women from CoMix in 19 European countries](https://doi.org/10.1186/s12884-022-05076-1). Wong KLM, Gimma A, Paixao ES; CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jarvis CI, Edmunds WJ. **BMC Pregnancy Childbirth**. 2022 Oct 8;22(1):757.
 4. [The influence of COVID-19 risk perception and vaccination status on the number of social contacts across Europe: insights from the CoMix study](https://doi.org/10.1101/2022.11.25.22282676). Wambua J, Loedy N, Jarvis CI, Wong KL, Faes C, Grah R, Prasse B, Sandmann F, Niehus R, Johnson H, Edmunds WJ, Beutels P, Hens N, Coletti P. **medRxiv**. 2022.
 
+## Other useful repositories
+- [CoMix data cleaning](https://github.com/jarvisc1/comix_data_clean): For cleaning, processing, and serving CoMix data.
+- [Comix Epipose](https://github.com/amygimma/comix_epipose): Report templates for the CoMix Survey.
+
 ## Team
 - [Martina Reichmuth, MSc](https://www.ispm.unibe.ch/about_us/staff/reichmuth_martina/index_eng.html)
 - [Dr. Leonie Heron](https://www.ispm.unibe.ch/about_us/staff/heron_leonie/index_eng.html)
