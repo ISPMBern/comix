@@ -37,10 +37,12 @@ comix_008_agematrix
 
 ## vaccination uptake (only panel B)
 comixdata_reg <- comix_010_cleaning_regression(comixdata_part)
+sf3_vac <- comixdata_reg[[2]]
+comixdata_reg<- comixdata_reg[[1]]
 table(is.na(comixdata_reg$vac_date[!duplicated(comixdata_reg$part_id)& comixdata_reg$vaccinated==1]))
 output_tte <- comix_011_vaccination_coxpropreg(comixdata_reg)
 output_log_missing <- comix_012_missingparticipating(comixdata_reg)
-output_poissonreg <- comix_013_vaccination_poissonregression(comixdata_reg, output_tte)
+output_poissonreg <- comix_013_vaccination_poissonregression(comixdata_reg, output_tte, sf3_vac)
 output_tte_exactdates <- comix_014_vaccination_coxpropreg_exactdates(comixdata_reg)
 output_reg <-cbind(output_poissonreg[c(1:4)], output_tte[[2]][-c(1,2,4,6,8)], output_poissonreg[-c(1:5,7,9,11,13)])# Combine regression models
 all_regression <- output_reg[,!grepl("P-value", colnames(output_reg))]

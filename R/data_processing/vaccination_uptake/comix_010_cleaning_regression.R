@@ -113,6 +113,24 @@ comix_010_cleaning_regression = function(comixdata_part) {
               mid_date = as_date(median(as.numeric(min_date:max_date))))%>% ungroup
   vacc_part$"Number vaccinated (precent)" <- paste0(vacc_part$`Number vaccinated`," (", round(vacc_part$`Precent vaccinated`,1),"%)")
   colnames(vacc_part)[1] <- "Panel wave"
+  data_reg$lower.age.limit <- as.factor(data_reg$lower.age.limit)
+  data_reg$age_bands <- recode(data_reg$lower.age.limit, 
+                               "0"= "0-4", "5"="5-11", "12"="12-17", "18"="18-29", "30"="30-39", "40"="40-49","50"="50-59", "60"="60-69", "70"="70+")
+  #                              "0"= "[0,5)", "5"="[5,11)", "12"="[12,18)", "18"="[18,30)", "30"="[30,40)", "40"="[40,50)","50"="[50,60)", "60"="[60,70)", "70"="70+")
+  vacc_part_age <- data_reg %>% arrange(as.numeric(gsub("[^0-9]","", data_reg$panel_wave))) %>% group_by(panel_wave,age_bands) %>%
+    summarise("Number participants" = length(part_id),
+              "Number vaccinated" = sum(na.omit(vaccinated)),
+              "Precent vaccinated" = sum(na.omit(vaccinated))/length(na.omit(vaccinated))*100,
+              CI_mean = sum(na.omit(vaccinated))/length(na.omit(vaccinated)),
+              mean=mean(na.omit(vaccinated)),
+              sample.se = sd(na.omit(vaccinated))/sqrt(length(na.omit(vaccinated))),
+              CI_low = CI_mean - interval*sample.se,
+              CI_up = CI_mean + interval*sample.se,
+              min_date = as_date(min(date)), 
+              max_date = as_date(max(date)),
+              mid_date = as_date(median(as.numeric(min_date:max_date))))%>% ungroup
+  vacc_part_age$"Number vaccinated (precent)" <- paste0(vacc_part_age$`Number vaccinated`," (", round(vacc_part_age$`Precent vaccinated`,1),"%)")
+ 
   
   
   table_vaccination <- data_reg %>% group_by(lower.age.limit) %>%
@@ -169,6 +187,8 @@ comix_010_cleaning_regression = function(comixdata_part) {
     theme_minimal()+
     geom_point(data=vacc_part, aes(y = CI_mean*100,x=mid_date, color=lables_fig1[1]),size = 2)+
     geom_errorbar(data=vacc_part, aes(xmin=min_date, ymin = CI_low*100, ymax = CI_up*100, y = CI_mean*100,x=mid_date, color=lables_fig1[1], linetype=lables_fig1[1],width=(as.numeric(max_date-min_date))),linewidth = 1)+
+    #geom_point(data=vacc_part_age, aes(y = CI_mean*100,x=mid_date),size = 2)+
+    #geom_errorbar(data=vacc_part_age, aes(xmin=min_date, ymin = CI_low*100, ymax = CI_up*100, y = CI_mean*100,x=mid_date,width=(as.numeric(max_date-min_date))),linewidth = 1)+
     geom_rect(data=panel_date,  aes(xmin=min_date, xmax=max_date, ymin=0, ymax=100), color="transparent", fill="#999999", alpha=0.3)+
     geom_line(data= bag_weekly,aes(x=as_date(year_week), y=cum_fulvacc_prec_total, color=lables_fig1[2],linetype=lables_fig1[2]),linewidth = 1)+
     geom_line(data= bag_weekly,aes(x=as_date(year_week), y=cum_fulvacc_prec_older17, color=lables_fig1[3],linetype=lables_fig1[3]),linewidth = 1)+
@@ -181,6 +201,18 @@ comix_010_cleaning_regression = function(comixdata_part) {
     scale_y_continuous(labels = function(x) paste0(x, "%"))+
     guides(color = guide_legend(nrow=2,byrow=TRUE,override.aes = list( linetype = lables_fig1_shape)))+
     labs(tag="",x = "", y =bquote("Vaccination uptake (%)"))
+  
+  sf3_vac <- ggplot(data = vacc_part_age) +
+    theme_minimal()+
+    geom_point(aes(x=panel_wave,y=CI_mean*100, color=age_bands), position=position_dodge(width=0.8), size=2) +
+    geom_errorbar(aes(x = panel_wave, y = CI_mean*100, ymin=CI_low*100, ymax=CI_up*100, color=age_bands),position=position_dodge(width=0.8))+
+    theme(legend.position = 'bottom')+ 
+    scale_color_manual(name=" ",values = c(col_9[c(3:5,7,8)], "aquamarine3"))+
+    scale_y_continuous(limits=c(0,100), labels = function(x) paste0(x, "%"))+
+    labs(tag="",subtitle = bquote(), x = "", y ="Overall vaccination uptake \n(data)")
+  
+  
+
   paste0("Vaccination attitude in CoMix (B1): ",paste0(names(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"])), ": ",table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"]), " (",round(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"])/sum(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B1"]))*100,1),"%)",collapse = "; "))
   paste0("Vaccination attitude in CoMix (B6): ",paste0(names(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"])), ": ",table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"]), " (",round(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"])/sum(table(data_reg$vaccine_want_cat_plus[data_reg$panel_wave=="B6"]))*100,1),"%)",collapse = "; "))
   
@@ -222,10 +254,7 @@ data_reg$agreement_measures_3cat <- gsub("[1-9] ","", data_reg$agreement_measure
 data_reg$agreement_measures_3cat <- factor(data_reg$agreement_measures_3cat, levels=gsub("[1-9] ","", levels(comixdata_part$agreement_measures_3cat)))
 data_reg$grossregion <- factor(data_reg$grossregion, order = FALSE, levels = c(names(table(data_reg$grossregion))[rev(order(table(data_reg$grossregion)))]))
 data_reg$panel_wave <- factor(data_reg$panel_wave, levels=unique(data_reg$panel_wave)[order(gsub("B","",unique(data_reg$panel_wave)))])
-data_reg$lower.age.limit <- as.factor(data_reg$lower.age.limit)
-data_reg$age_bands <- recode(data_reg$lower.age.limit, 
-                             "0"= "0-4", "5"="5-11", "12"="12-17", "18"="18-29", "30"="30-39", "40"="40-49","50"="50-59", "60"="60-69", "70"="70+")
- #                              "0"= "[0,5)", "5"="[5,11)", "12"="[12,18)", "18"="[18,30)", "30"="[30,40)", "40"="[40,50)","50"="[50,60)", "60"="[60,70)", "70"="70+")
+
 Fun_prehistory <- function(x){
   panel_wave_id <- data_reg$pos[data_reg$panel_wave_id ==x]
   wave <- data_reg$wave[data_reg$panel_wave_id ==x]
@@ -477,7 +506,6 @@ comixdata_ipw$part_id<- as.character(comixdata_ipw$part_id)
 data_reg <- merge(data_reg, comixdata_ipw[,c("ipw0", "ipw","part_id","panel_wave")], by =c("part_id","panel_wave"), all.x = T)
 apply(data_reg,2,function(x) sum(is.na(x))) # Any missing variables?
 
-test <- data_reg
 
 paste0("Number of participants: ", length(unique(data_reg$part_id)))
 data_reg1 <- na.omit(data_reg[,!grepl("vac_date|ipw",colnames(data_reg))])
@@ -593,5 +621,6 @@ write.csv(table_study_pop[,c(1:3)], "./output/tables/vaccination_uptake/Table2.c
 
 data_reg <- data_reg1
 
-return(data_reg)
+#return(data_reg)
+return(list(data_reg,sf3_vac))
 }

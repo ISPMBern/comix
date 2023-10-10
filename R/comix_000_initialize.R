@@ -7,11 +7,11 @@
 #' Load packages (make sure you installed all packages!)
 require(tidyverse)
 require(knitr)
-library(tinytex)
+#library(tinytex)
 require(lubridate)
-require(cowplot)
-require(sf)
-require(mice)
+#require(cowplot)
+#require(sf)
+#require(mice)
 require(foreign)
 require(reshape2)
 library(xlsx)
@@ -20,27 +20,28 @@ library(httr)
 library(rmarkdown)
 library(knitr)
 library(RColorBrewer)
+library(pals)
 library(ggplot2)
+library(ggpubr)
 library(gridExtra)
 library(grid)
 library(dplyr)
 library(patchwork)
 library(socialmixr)
 library(kableExtra)
-library(sf)# =simple feature, to deal with spatial vectors,
-library(ggrepel)# for geographic maps
 library(table1) 
-library(survey)
+library(Matrix)
+#library(survey)
 library(forestplot)
-library(lme4)  # Fitting Generalized Linear Mixed-Effects Models
+#library(lme4)  # Fitting Generalized Linear Mixed-Effects Models
 library(parameters)
 library(splines)
-library(naniar)
-library(riskRegression)
+#library(naniar)
 library(lmtest)
-library(survminer)
+#library(survminer)
 library(readxl)
 library(EpiNow2)
+library(here)
 
 
 # Paths
@@ -50,24 +51,24 @@ path_saveoutput = "output/"
 setwd("./data_cleaning")
 # run functions to use
 files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
-files_functions = files_functions[!grepl(pattern = "000|backup",files_functions)]
+files_functions = files_functions[!grepl(pattern = "000|backup|README",files_functions)]
 sapply(files_functions, source)
 #rm(files_functions)
 
 setwd("../data_processing/vaccination_uptake")
 # run functions to use
 files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
-files_functions = files_functions[!grepl(pattern = "000|backup|/README",files_functions)]
+files_functions = files_functions[!grepl(pattern = "000|backup|README",files_functions)]
 sapply(files_functions, source)
 rm(files_functions)
 
-setwd(path_name)
-setwd("./data_processing/contact_matrices")
+#setwd(path_name)
+#setwd("./data_processing/contact_matrices")
 # run functions to use
-files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
-files_functions = files_functions[!grepl(pattern = "000|backup|/README",files_functions)]
-sapply(files_functions, source)
-rm(files_functions)
+#files_functions = list.files(getwd(),full.names = TRUE, include.dirs = TRUE)
+#files_functions = files_functions[!grepl(pattern = "000|backup|/README",files_functions)]
+#sapply(files_functions, source)
+#rm(files_functions)
 
 setwd(path_name)
 

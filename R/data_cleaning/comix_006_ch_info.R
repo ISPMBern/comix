@@ -26,6 +26,13 @@ comix_006_ch_info = function() {
   colnames(BAG_cases_canton_d)[3] <- "cases_num"
   BAG_cases_canton_d <- BAG_cases_canton_d[BAG_cases_canton_d$geoRegio %in% ch_cantons,]
   
+  BAG_hosp_canton_d <- read.csv("./temp_data/data/COVID19Hosp_geoRegion.csv")
+  colnames(BAG_hosp_canton_d)[2] <- "date"
+  colnames(BAG_hosp_canton_d)[3] <- "hosp_num"
+  BAG_hosp_canton_d <- BAG_hosp_canton_d[BAG_hosp_canton_d$geoRegio %in% ch_cantons,]
+  
+  
+  
   
   BAG_test_canton <- read.csv("./temp_data/data/COVID19Test_geoRegion_PCR_Antigen_w.csv")
   colnames(BAG_test_canton)[2] <- "week"
@@ -230,7 +237,7 @@ education_ch_bfs$total_pop <- round((as.numeric(education_ch_bfs[,2])/sum(swiss_
 # But first vaccination on 23.12.2020 (https://www.swissinfo.ch/eng/first-vaccines-arrive-in-switzerland--first-jabs-on-wednesday/46240828 (access 2021-05-06))
 
 
-swiss_pop_data <- list(BAG_data, seq_ch,KOF,pop_data_age,pop_data_gender,pop_data_residence,salary_ch_bfs_2018,employment_ch_bfs_2020,education_ch_bfs, pop_data_age_gender, BAG_cases_canton_d)
+swiss_pop_data <- list(BAG_data, seq_ch,KOF,pop_data_age,pop_data_gender,pop_data_residence,salary_ch_bfs_2018,employment_ch_bfs_2020,education_ch_bfs, pop_data_age_gender, BAG_cases_canton_d, BAG_hosp_canton_d)
 
 return(swiss_pop_data)
 }

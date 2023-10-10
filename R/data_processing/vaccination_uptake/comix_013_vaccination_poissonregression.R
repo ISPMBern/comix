@@ -5,7 +5,7 @@
 #' ---
 
 
-comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
+comix_013_vaccination_poissonregression = function(data_reg, output_tte, sf3_vac) {
   ##############################################
   # point process using poisson regression 
   ##############################################
@@ -273,44 +273,73 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
   
   
   #Figure 3 (vaccination rates for age groups)
-  output <- summary(mod_multi)
   output <- as.data.frame(mod_multi$coefficients)
-  output$RR <- exp(coef(mod_multi))
+  colnames(output)[1] <- "coef"
+  output$sd <- sqrt(diag(vcov(mod_multi))) 
   output$se <- qnorm(0.975) * sqrt(diag(vcov(mod_multi))) 
-  mod_multi <- output[grepl("ntercept|age_bands|panel_wave",rownames(output)),]
-  mod_multi$rates_panel <- c(exp(mod_multi[1,1]),exp(mod_multi[1,1]+mod_multi[-1,1]))
-  mod_multi$rates_CI2.5 <- c(exp(mod_multi[1,1]-mod_multi$se[1]),exp(mod_multi[1,1]+mod_multi[-1,1]-mod_multi$se[-1]))
-  mod_multi$rates_CI97.5 <- c(exp(mod_multi[1,1]+mod_multi$se[1]),exp(mod_multi[1,1]+mod_multi[-1,1]+mod_multi$se[-1]))
-  remove(output)
-  for(i in unlist(panel_date[-1,1])){
-    mod_multi[grepl(i,rownames(mod_multi)),"mid_date"] <- panel_date$mid_date[panel_date$panel_wave==i]
+  vcov_martix_output <- vcov(mod_multi)
+  
+  # renaming:
+  vcov_martix_output <- vcov_martix_output[grepl("ntercept|age_bands|panel_wave",rownames(vcov_martix_output)),]
+  vcov_martix_output <- vcov_martix_output[,grepl("ntercept|age_bands|panel_wave",colnames(vcov_martix_output))]
+  
+  output <- output[grepl("ntercept|age_bands|panel_wave",rownames(output)),]
+  
+  output$age_bands <- gsub(".*\\_bands", "", rownames(output))
+  output$age_bands[grepl("panel_wave",output$age_bands)] <- "18-29"
+  output$age_bands[1] <- "18-29"
+  output$model <- "Adjusted"
+  output$age_bands <- paste0(output$age_bands, " years")
+  output$age_bands <- factor(output$age_bands, paste0(levels(data_reg$age_bands), " years"))
+  
+  output$panel_wave <- gsub('^.*\\panel_wave','',rownames(output))
+  output$panel_wave <- gsub(':.*','',output$panel_wave)
+  output$panel_wave[grepl("ntercept|age", output$panel_wave)] <- "B1"
+  output$panel_wave <- factor(output$panel_wave, levels(data_reg$panel_wave))
+  
+   for(i in unlist(panel_date[-1,1])){
+    output[grepl(i,rownames(output)),"mid_date"] <- panel_date$mid_date[panel_date$panel_wave==i]
   }
-  mod_multi$mid_date[is.na(mod_multi$mid_date)] <- as_date(unlist(panel_date[1,"mid_date"]))
-  #mod_multi$age_bands <- gsub("^.*\\[", "", rownames(mod_multi))
-  #mod_multi$age_bands <- sub(".*(70\\+)", "\\1", mod_multi$age_bands )
-  #mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18,30)"
-  #mod_multi$age_bands[1] <- "18,30)"
-  #mod_multi$model <- "Adjusted"
-  #mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)] <- paste0("[",mod_multi$age_bands[!grepl("\\b[+]",mod_multi$age_bands)])
-  #mod_multi$age_bands <- factor(mod_multi$age_bands, levels(data_reg$age_bands))
-  mod_multi$age_bands <- gsub(".*\\_bands", "", rownames(mod_multi))
-  mod_multi$age_bands[grepl("panel_wave",mod_multi$age_bands)] <- "18-29"
-  mod_multi$age_bands[1] <- "18-29"
-  mod_multi$model <- "Adjusted"
-  mod_multi$age_bands <- paste0(mod_multi$age_bands, " years")
-  mod_multi$age_bands <- factor(mod_multi$age_bands, paste0(levels(data_reg$age_bands), " years"))
+  output$mid_date[is.na(output$mid_date)] <- as_date(unlist(panel_date[1,"mid_date"]))
   
-  mod_multi$panel_wave <- gsub('^.*\\panel_wave','',rownames(mod_multi))
-  mod_multi$panel_wave <- gsub(':.*','',mod_multi$panel_wave)
-  mod_multi$panel_wave[grepl("ntercept|age", mod_multi$panel_wave)] <- "B1"
-  mod_multi$panel_wave <- factor(mod_multi$panel_wave, levels(data_reg$panel_wave))
+  n_sample <- 1e6
   
-  plot_time<- ggplot(data = mod_multi) +
+  output$RR <- exp(output$coef)
+  output$rates_log <- c((output[1,1]),(output[1,1]+output[-1,1]))
+  
+  output_m <- mvtnorm::rmvnorm(n_sample, output$rates_log,vcov_martix_output)
+  output_m <- exp(t(output_m))
+
+  output$rates_cum_m <- NA
+  output$rates_cum_low <- NA
+  output$rates_cum_up <- NA
+  for(i in 1:length(unique(output$age_bands))){
+    age <- unique(output$age_bands)[i]
+    age_r <- grep(age,output$age_bands)
+    if(i==6){age_r <- grep("70",output$age_bands)}
+    age_vac <-output_m[age_r,]
+    output[output$age_bands %in% age,][1, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,]),probs = c(0.5,0.025,0.975))
+    output[output$age_bands %in% age,][2, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,])*(1-age_vac[2,]),probs = c(0.5,0.025,0.975))
+    output[output$age_bands %in% age,][3, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,])*(1-age_vac[2,])*(1-age_vac[3,]),probs = c(0.5,0.025,0.975))
+    output[output$age_bands %in% age,][4, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,])*(1-age_vac[2,])*(1-age_vac[3,])*(1-age_vac[4,]),probs = c(0.5,0.025,0.975))
+    output[output$age_bands %in% age,][5, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,])*(1-age_vac[2,])*(1-age_vac[3,])*(1-age_vac[4,])*(1-age_vac[5,]),probs = c(0.5,0.025,0.975))
+    output[output$age_bands %in% age,][6, c("rates_cum_m", "rates_cum_low","rates_cum_up")] <- quantile(1- (1-age_vac[1,])*(1-age_vac[2,])*(1-age_vac[3,])*(1-age_vac[4,])*(1-age_vac[5,])*(1-age_vac[6,]),probs = c(0.5,0.025,0.975))
+  }
+  
+  output$rates <- exp(output$rates_log)
+  output$rates_low <- exp(output$rates_log - output$se)
+  output$rates_up <- exp(output$rates_log + output$se)
+  output <- output %>% group_by(age_bands) %>% arrange(mid_date) %>% mutate(rates_cum = (1- cumprod((1- rates))))
+  
+  output <- as.data.frame(output)
+  
+
+  plot_time<- ggplot(data = output) +
     theme_minimal()+
     facet_wrap(vars(age_bands))+#  facet_wrap(vars(model))+
-    geom_line(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), linewidth=0.6) +#http://sape.inf.usi.ch/quick-reference/ggplot2/linetype #linetype="dashed"
-    geom_point(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates_panel, group=model, color=model), size=1) +
-    geom_ribbon(aes(x = as_date(mid_date+as_date("2022-01-01")), y = rates_panel, ymin=rates_CI2.5, ymax=rates_CI97.5, group=model, fill=model),alpha=0.2)+
+    geom_line(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates, group=model, color=model), linewidth=0.6) +#http://sape.inf.usi.ch/quick-reference/ggplot2/linetype #linetype="dashed"
+    geom_point(aes(x=as_date(mid_date+as_date("2022-01-01")),y=rates, group=model, color=model), size=1) +
+    geom_ribbon(aes(x = as_date(mid_date+as_date("2022-01-01")), y = rates, ymin=rates_low, ymax=rates_up, group=model, fill=model),alpha=0.2)+
     scale_color_manual(name=" ",values = c(col_9[2]))+#c(col_9[1:6]))+
     scale_fill_manual(name=" ",values = c(col_9[2]))+#c(col_9[1:6]))+
     theme(legend.position = 'bottom')+ 
@@ -319,15 +348,32 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
     labs(tag="",subtitle = bquote(), x = "", y =" Vaccination uptake per interval")
   ggsave(plot_time, filename = paste0("./output/figures/vaccination_uptake/Figure3.png"), height =4, width = 6,  bg = "transparent")
   
-  plot_time_age<-ggplot(data = mod_multi) +
+
+  
+  plot_time_ageA<-ggplot(data = output) +
     theme_minimal()+
-    geom_point(aes(x=panel_wave,y=rates_panel, color=age_bands), position=position_dodge(width=0.8), size=2) +
-    geom_errorbar(aes(x = panel_wave, y = rates_panel, ymin=rates_CI2.5, ymax=rates_CI97.5, color=age_bands),position=position_dodge(width=0.8))+
+    geom_point(aes(x=panel_wave,y=rates, color=age_bands), position=position_dodge(width=0.8), size=2) +
+    geom_errorbar(aes(x = panel_wave, y = rates, ymin=rates_low, ymax=rates_up, color=age_bands),position=position_dodge(width=0.8))+
     theme(legend.position = 'bottom')+ 
     scale_color_manual(name=" ",values = c(col_9[c(3:5,7,8)], "aquamarine3"))+
     scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
-    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination uptake per interval")
-  ggsave(plot_time_age, filename = paste0("./output/figures/vaccination_uptake/SupFig3.png"), height =3, width = 5,  bg = "transparent")
+    labs(tag="",subtitle = bquote(), x = "", y ="Vaccination uptake per interval \n(model)")
+   
+  plot_time_ageB<-ggplot(data = output) +
+    theme_minimal()+
+    geom_point(aes(x=panel_wave,y=rates_cum_m, color=age_bands), position=position_dodge(width=0.8), size=2) +
+    geom_errorbar(aes(x = panel_wave, y = rates_cum_m, ymin=rates_cum_low, ymax=rates_cum_up, color=age_bands),position=position_dodge(width=0.8))+
+    theme(legend.position = 'bottom')+ 
+    scale_color_manual(name=" ",values = c(col_9[c(3:5,7,8)], "aquamarine3"))+
+    scale_y_continuous(limits=c(0,1), labels = function(x) paste0(x*100, "%"))+
+    labs(tag="",subtitle = bquote(), x = "", y ="Overall vaccination uptake \n(model)")
+  
+  p1 <- ggplot() + theme_void()
+  
+  plot_time_age <- ggarrange( plot_time_ageA, p1,  plot_time_ageB,sf3_vac, ncol = 2, nrow = 2,labels = c("A","","B", "C"), common.legend = TRUE, legend="top")
+  
+  ggsave(plot_time_age, filename = paste0("./output/figures/vaccination_uptake/SupFig3.png"), height =6, width = 8,  bg = "transparent")
+  
   
   
   
@@ -580,7 +626,7 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
                      c(paste0("*N=",format(length(unique(data_reg$part_id)), nsmall=0, big.mark=",") ), output_adj_interaction[-c(1:5),11]),
                      c("RR (95%-CI)", output_unadj[-c(1:5),9]),c("aRR (95%-CI)", output_adj_interaction[-c(1:5),9]))
   
-  ticks <- c(0.5,1,2) # xaxis labeling
+  #ticks <- c(0.5,1,2) # xaxis labeling
   attr(ticks, "labels") <- as.character(ticks) # # xaxis labeling  ADDITION
   
   
@@ -617,8 +663,8 @@ comix_013_vaccination_poissonregression = function(data_reg, output_tte) {
              graphwidth=unit (70, "mm"), 
              colgap=unit(3,"mm"),new_page = F,
              xlog=TRUE, 
-             xticks=ticks, 
-             clip =c(0.5, 1.5),
+             xticks =c(log(0.5),log(1),log(1.5)),
+             clip =c(0.5, 2),
              col=fpColors(box=c(col_9[1:2]),lines = c(col_9[1:2])),
              boxsize= c(0.12),lwd.ci=4, ci.vertices=TRUE, ci.vertices.height = 0.1)
   

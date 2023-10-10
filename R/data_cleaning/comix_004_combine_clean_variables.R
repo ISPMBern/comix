@@ -79,7 +79,7 @@ comix_004_combine_clean_variables = function(comixdata_cont){
   
   ## distance measures 
   # distance measures in meters:
-  comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "houshold member"
+  comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "household_member"
   comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$cnt_dis_2m_plus,ignore.case = T)] <- "more 2m"
   comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$cnt_dis_1m_plus,ignore.case = T)] <- "more 1m"
   comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$cnt_dis_1m_minus,ignore.case = T)] <- "less 1m"
@@ -91,7 +91,7 @@ comix_004_combine_clean_variables = function(comixdata_cont){
   comixdata_cont$cnt_dis_meters[grepl("Yes",comixdata_cont$cnt_dis_other,ignore.case = T)] <- "other"
   
   # hand washing:
-  comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "houshold member"
+  comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "household_member"
   comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$cnt_dis_2m_plus,ignore.case = T)] <- "other"
   comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$cnt_dis_1m_plus,ignore.case = T)] <- "other"
   comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$cnt_dis_1m_minus,ignore.case = T)] <- "other"
@@ -103,7 +103,7 @@ comix_004_combine_clean_variables = function(comixdata_cont){
   comixdata_cont$cnt_dis_hands[grepl("Yes",comixdata_cont$cnt_dis_other,ignore.case = T)] <- "other"
   
   # mask wearing:
-  comixdata_cont$cnt_dis_mask[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "houshold member"
+  comixdata_cont$cnt_dis_mask[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "household_member"
   comixdata_cont$cnt_dis_mask[grepl("Yes",comixdata_cont$cnt_dis_2m_plus,ignore.case = T)] <- "other"
   comixdata_cont$cnt_dis_mask[grepl("Yes",comixdata_cont$cnt_dis_1m_plus,ignore.case = T)] <- "other"
   comixdata_cont$cnt_dis_mask[grepl("Yes",comixdata_cont$cnt_dis_1m_minus,ignore.case = T)] <- "other"
@@ -116,7 +116,7 @@ comix_004_combine_clean_variables = function(comixdata_cont){
   
   
   comixdata_cont$cnt_dis_measures <- as.character(comixdata_cont$cnt_dis_measures)
-  comixdata_cont$cnt_dis_measures[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "houshold member"
+  comixdata_cont$cnt_dis_measures[grepl("Yes",comixdata_cont$household_member,ignore.case = T)] <- "household_member"
   comixdata_cont$cnt_dis_measures[grepl("No",comixdata_cont$cnt_dis_wash_before,ignore.case = T)] <- "No"
   comixdata_cont$cnt_dis_measures[grepl("No",comixdata_cont$cnt_dis_wash_after,ignore.case = T)] <- "No"
   comixdata_cont$cnt_dis_measures[grepl("No",comixdata_cont$cnt_dis_2m_plus,ignore.case = T)] <- "No"
@@ -133,7 +133,7 @@ comix_004_combine_clean_variables = function(comixdata_cont){
   comixdata_cont$cnt_dis_measures[grepl("Yes",comixdata_cont$cnt_dis_notsaid,ignore.case = T)] <- "Prefer not to say"
 
   
-  comixdata_cont$cnt_duration <- factor(comixdata_cont$cnt_duration, levels = c("Less than 5 minutes","5 minutes or more, but less than 15 minutes","15 minutes or more, but less than 1 hour","1 hour or more, but less than 4 hours","4 hours or more","houshold member","Don’t know"))
+  comixdata_cont$cnt_duration <- factor(comixdata_cont$cnt_duration, levels = c("Less than 5 minutes","5 minutes or more, but less than 15 minutes","15 minutes or more, but less than 1 hour","1 hour or more, but less than 4 hours","4 hours or more","household_member","Don’t know"))
   comixdata_cont$panel_wave<- gsub("_.*","", comixdata_cont$panel_wave_id)
   comixdata_cont$survey_group <-  ifelse(grepl("A|B|F",comixdata_cont$panel_wave_id),"adults", "children")
 

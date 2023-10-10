@@ -42,6 +42,9 @@ comix_001_load_participants = function() {
   ### Participant file:
   ## get variable "part_id"
   ipsos_data$part_id <- ipsos_data$Respondent_ID
+  if(sum(is.na(ipsos_data$Respondent_ID))>1){
+    ipsos_data$part_id <- c(1: length(ipsos_data$CurrentYear))
+  }
   ## get variable "panel_wave"
   # get variable "date" (date of participation)
   ipsos_data$date <- as_date(paste0(ipsos_data$CurrentYear,"-", ipsos_data$CurrentMonth,"-", ipsos_data$CurrentDay),format="%Y-%m-%d")
@@ -226,7 +229,6 @@ ipsos_data$canton  <- sapply(ipsos_data$QMktSize_6_1, from_cantons_to_abrev)
   ipsos_data$education_level <- sapply(ipsos_data$education_level, rename_education)
   ipsos_data$education_level <- factor(ipsos_data$education_level, levels =c("Obligatory school","Vocational education", "Gymnasium", "Advanced vocational education", "Higher education (e.g., Bachelor, Master or PhD)"))
 
-  #!!   Lower Secondary School vs upper secondary school?!
   ## get variable "language_ch" (in QMktSize_10_1)
   rename_language_ch <- function(x){
     if(is.na(x)){return(NA)}
@@ -302,7 +304,6 @@ ipsos_data$canton  <- sapply(ipsos_data$QMktSize_6_1, from_cantons_to_abrev)
   if(min(ipsos_data$date) >as_date("2021-06-01") & unique(ipsos_data$Sampletype) %in% c("Sampletype=1 Main sample",1)){
     ipsos_data$change_behavior <- ipsos_data$QXX5B }
   ## get variable "vaccine_want" (only for after May 2021), these that got vaccine also wanted. and question also asked for children!
-#!! check that no problem between children and adults
   ipsos_data$vaccine_want <- NA
   if(min(ipsos_data$date) > as_date("2021-06-01")& unique(ipsos_data$Sampletype) %in% c("Sampletype=1 Main sample",1)){
     ipsos_data$vaccine_want <- ipsos_data$QXX4}
