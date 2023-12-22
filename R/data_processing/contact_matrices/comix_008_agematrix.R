@@ -113,20 +113,70 @@ comix_008_agematrix = function() {
   min_time <- min(panel_wave_df$min_time)
   max_time <- max(panel_wave_df$max_time)
   
-  # get Table 1
-  table1 <- panel_wave_df[,c("panel_wave","time_panel_wave", "n_part", "contactsCI")]
-  colnames(table1) <- c("Panel wave","Time period", "Number of participants", "Mean number of contacts (95% CI)")
-  write.csv(table1,"./output/tables/age_matrices/Table1.csv")
   
   # get Figure 1 (and Supfig 1)
   age_groups_recode <- setNames(age_groups_cat, age_groups)
   unadj_mean_contacts_age_sentinella$age_band_fig1 <- recode(unadj_mean_contacts_age_sentinella$age_band_fig1, !!!age_groups_recode)
   unadj_mean_contacts_age_sentinella$age_band_fig1 <- factor(unadj_mean_contacts_age_sentinella$age_band_fig1, levels= age_groups_cat)
   
+
+  # Describe comix data
+  quantile(comix$participants$part_age, probs= c(0.5,0.25,0.75))#table(is.na(comix$participants$part_age))
+  round(length(comix$participants$part_age[comix$participants$survey_group=="children"])/length(comix$participants$part_age)*100,1)
+  round(length(comix$participants$part_age[comix$participants$part_age>=65])/length(comix$participants$part_age)*100,1)
+  
+  length(unique(comix$participants$panel_wave))
+  table(comix$participants$part_gender)
+  round(table(comix$participants$part_gender)/length(comix$participants$part_gender)*100,1)  #table(is.na(comix$participants$part_gender))
+  round(table(comix$participants$part_gender[comix$participants$survey_group=="adults"])/length(comix$participants$part_gender[comix$participants$survey_group=="adults"])*100,1)  #table(is.na(comix$participants$part_gender))
+  round(table(comix$participants$part_gender[comix$participants$survey_group=="children"])/length(comix$participants$part_gender[comix$participants$survey_group=="children"])*100,1)  #table(is.na(comix$participants$part_gender))
+  
+  quantile(comix$participants$household_size)
+  
+  table(comix$participants$canton)[order(table(comix$participants$canton))]
+  round(table(comix$participants$canton)[order(table(comix$participants$canton))]/length(comix$participants$canton)*100,1)
+  table2 <- as.data.frame(unclass(table(comix$participants$wave, comix$participants$panel)))
+  
+  table(unique(comix$participants$panel_wave))
+  comix$participants$part_id_all <- as.numeric(gsub('.{0,2}$', '', comix$participants$part_id))
+  comix$participants$n_part <- 1
+  comix$participants <- comix$participants %>% group_by(part_id_all) %>% mutate(n_part = cumsum(n_part))
+  quantile(comix$participants$n_part)
+  mean(comix$participants$n_part)
+   table2 <- as.data.frame(unclass(table(comix$participants$n_part, comix$participants$panel)))
+   write.csv(table2,"./output/tables/age_matrices/Table2.csv")
+  
+  unadj_mean_contacts_npart <- comix$participants %>% group_by(panel_wave,n_part) %>%   # by ages groups
+    reframe(mean_contacts = round(mean(sum_contacts),1),
+            CI_up = round(mean(sum_contacts)+qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1),
+            CI_low = round(mean(sum_contacts)-qnorm(0.975)*sd(sum_contacts)/sqrt(length(part_id)),1))
+ 
   unadj_mean_contacts_age_sentinella <- merge(unadj_mean_contacts_age_sentinella, panel_wave_df[,c("panel_wave", "mid_time", "min_time", "max_time")], by="panel_wave")
   unadj_mean_contacts_all <- merge(unadj_mean_contacts_all, panel_wave_df[,c("panel_wave", "mid_time", "min_time", "max_time")], by="panel_wave")
   unadj_mean_contacts_gender <- merge(unadj_mean_contacts_gender, panel_wave_df[,c("panel_wave", "mid_time", "min_time", "max_time")], by="panel_wave")
   unadj_mean_contacts_location <- merge(unadj_mean_contacts_location, panel_wave_df[,c("panel_wave", "mid_time", "min_time", "max_time")], by="panel_wave")
+  unadj_mean_contacts_npart <- merge(unadj_mean_contacts_npart, panel_wave_df[,c("panel_wave", "mid_time", "min_time", "max_time")], by="panel_wave")
+  
+ 
+  
+  recruitment_fun<- function(x){
+    wave_id <- comix$participants$part_id_all[comix$participants$panel_wave==x]
+    pre_wave_id <- unique(comix$participants$part_id_all[comix$participants$wave < as.numeric(gsub("[A-Z]", "", x)) & comix$participants$panel == gsub("[0-9]", "", x)])
+    new <- sum(!wave_id %in% pre_wave_id)
+    missed <- sum(!comix$participants$part_id_all[comix$participants$wave ==(as.numeric(gsub("[A-Z]", "", x))-1) & comix$participants$panel == gsub("[0-9]", "", x)] %in% comix$participants$part_id_all[comix$participants$wave == as.numeric(gsub("[A-Z]", "", x)) & comix$participants$panel == gsub("[0-9]", "", x)])
+    if(as.numeric(gsub("[A-Z]", "", x))!=1){
+      new_again <- sum(!comix$participants$part_id_all[comix$participants$wave == as.numeric(gsub("[A-Z]", "", x)) & comix$participants$panel == gsub("[0-9]", "", x)] %in% comix$participants$part_id_all[comix$participants$wave == (as.numeric(gsub("[A-Z]", "", x))-1) & comix$participants$panel == gsub("[0-9]", "", x)]& comix$participants$part_id_all[comix$participants$wave == as.numeric(gsub("[A-Z]", "", x)) & comix$participants$panel == gsub("[0-9]", "", x)] %in% comix$participants$part_id_all[comix$participants$wave<(as.numeric(gsub("[A-Z]", "", x))-1)])
+    }
+    else(new_again <- 0)
+    return(c(new,missed,new_again))
+  }
+  panel_wave_df[,c("new","missed","new_again")] <- as.data.frame(t(sapply(panel_wave_df$panel_wave, recruitment_fun)))
+  comix$participants$part_id_all <-  NULL
+  # get Table 1
+  table1 <- panel_wave_df[,c("panel_wave","time_panel_wave", "n_part", "contactsCI", "new","missed","new_again")]
+  colnames(table1) <- c("Panel wave","Time period", "Number of participants", "Mean number of contacts (95% CI)","Number of newly enrolled participants","Number of missing participants who had been previously enrolled","Number of returning participants after missing at least one wave")
+  write.csv(table1,"./output/tables/age_matrices/Table1.csv")
+  
   
   ### get data
   #hosp_ch <- swiss_pop_data[[12]]# # hospitalized cases in Switzerland
@@ -291,7 +341,7 @@ comix_008_agematrix = function() {
           panel.grid.major.x = element_line(colour = "transparent"))+
     labs(tag="",x = "", y =bquote("Crude number of \ncontacts per day"))
   fig1<-ggarrange(fig1A,fig1B,ncol=1, nrow=2, align = "hv", labels=c("A", "B"))
-  ggsave(fig1, filename = paste0("./output/figures/age_matrices/Figure1.png"), height = 6, width = 12,  bg = "transparent")
+  ggsave(fig1, filename = paste0("./output/figures/age_matrices/Figure1.pdf"), height = 6, width = 12,  bg = "transparent")
   
   # supplementary figure 1: by type gender and type of contact
   sf2a <- ggplot()+
@@ -326,8 +376,25 @@ comix_008_agematrix = function() {
     theme(panel.grid.minor = element_line(colour = "transparent"),
           panel.grid.major.x = element_line(colour = "transparent"))+
     labs(tag="",x = "", y =bquote("Crude number of \ncontacts per day"))
-  sf2<-ggarrange(sf2a,sf2b,ncol=1, nrow=2, align = "hv", labels=c("A", "B"))
-  ggsave(sf2, filename = paste0("./output/figures/age_matrices/sensitivity/SF2.png"), height = 6, width = 12,  bg = "transparent")
+  unadj_mean_contacts_npart$n_part <- as.character(unadj_mean_contacts_npart$n_part)
+  sf2c <- ggplot()+
+    theme_minimal()+
+    geom_rect(data=unadj_mean_contacts_all,  aes(xmin=min_time, xmax=max_time, ymin=0, ymax=10), color="transparent", fill="grey", alpha=0.2)+
+    scale_x_date(date_breaks= "1 month", date_labels = "%b\n%Y")+
+    geom_point(data=unadj_mean_contacts_npart, aes(y = mean_contacts,x=mid_time, fill=n_part,color=n_part))+
+    geom_errorbar(data=unadj_mean_contacts_npart, aes(xmin=min_time,xmax=max_time, ymin = CI_low, ymax = CI_up, y = mean_contacts,x=mid_time, color=n_part))+
+    geom_linerange(data=unadj_mean_contacts_npart, aes(xmin=min_time,xmax=max_time, y=mean_contacts, color=n_part),linewidth=3) +
+    geom_text(data=panel_wave_df[panel_wave_df$panel%in% c("A", "B", "F"),], aes(x=mid_time, y=1,vjust = 0, label= panel_wave), colour= "black", size=3) + 
+    geom_text(data=panel_wave_df[!panel_wave_df$panel%in% c("A", "B", "F"),], aes(x=mid_time, y=1,vjust = 1.5, label= panel_wave), colour= "black", size=3) + 
+    coord_cartesian(xlim =c(min(unadj_mean_contacts_all$min_time),max(unadj_mean_contacts_all$max_time)),
+                    ylim =c(0,10),expand = TRUE)+
+    scale_color_manual(values=cols25(n=25)[9:(15+length(levels(unadj_mean_contacts_npart$n_part)))], name="")+
+    scale_fill_manual(values=cols25(n=25)[9:(15+length(levels(unadj_mean_contacts_npart$n_part)))], name="")+
+    theme(panel.grid.minor = element_line(colour = "transparent"),
+          panel.grid.major.x = element_line(colour = "transparent"))+
+    labs(tag="",x = "", y =bquote("Crude number of \ncontacts per day"))
+  sf2<-ggarrange(sf2a,sf2b,sf2c,ncol=1, nrow=3, align = "hv", labels=c("A", "B", "C"))
+  ggsave(sf2, filename = paste0("./output/figures/age_matrices/sensitivity/SF2.pdf"), height = 9, width = 12,  bg = "transparent")
   # Supfig2: Show distribution of contacts
   round(table(comix$contacts$cnt_location)/length(comix$contacts$cnt_location)*100)#overall
   round(table(comix$contacts$cnt_location[grepl("A|B|F",comix$contacts$panel_wave)])/length(comix$contacts$cnt_location[grepl("A|B|F",comix$contacts$panel_wave)])*100)#adult waves
@@ -341,8 +408,8 @@ comix_008_agematrix = function() {
     theme(panel.grid.minor = element_line(colour = "transparent"),
           panel.border = element_blank(),
           panel.grid.major.x = element_line(colour = "transparent"))+
-    labs(tag="",x = "", y =bquote("Crude number of \ncontacts per day"))
-  ggsave(sf3, filename = paste0("./output/figures/age_matrices/sensitivity/SF3.png"), height = 3, width = 8,  bg = "transparent")
+    labs(tag="",x = "", y =bquote("Fraction of contacts \nby location"))
+  ggsave(sf3, filename = paste0("./output/figures/age_matrices/sensitivity/SF3.pdf"), height = 3, width = 8,  bg = "transparent")
   
   
   ### Swiss demographic data
@@ -500,11 +567,12 @@ comix_008_agematrix = function() {
     scale_x_date(date_breaks = "3 month", date_labels = "%b\n%Y")+
     theme(panel.grid.minor = element_line(colour = "transparent"),
           panel.grid.major.x = element_line(colour = "transparent"))+
+    expand_limits(x = as_date(max(seroprevalence_data$date)+18))+
     labs(tag=bquote(.("")),subtitle = "", x = "", y =bquote("Seroprevalence estimates \nin Switzerland"))
-  sf1
-   ggsave(sf1, filename = paste0("./output/figures/age_matrices/sensitivity/SF1.png"), height = 4, width = 6,  bg = "transparent")
-  remove(seroprev)
   
+   ggsave(sf1, filename = paste0("./output/figures/age_matrices/sensitivity/SF1.png"), height = 4, width = 7,  bg = "transparent")
+   (quantile(seroprev$V1[as_date(seroprev$V2)%in% comix$participants$sday_id])*100)[c(1,5)] # seroprevalence during study period
+   remove(seroprev)
   
   
   ## get contact matrices, reduction, largest eigenvalue
@@ -559,7 +627,7 @@ comix_008_agematrix = function() {
     remove(m_r)
     
     #get df do summarize panel/wave
-    df <- cbind(comix_survey$participants %>%
+    df <- cbind(comix_survey$participants  %>% #filter(survey_group=="adults")%>%
       summarise(
         survey= paste(p, pc, collapse =" "),
         n_part = length(unique(part_id)),
@@ -634,7 +702,6 @@ comix_008_agematrix = function() {
     l_ev6 <- as.data.frame(t(l_ev6))
     l_ev6[c(9:11)] <- sapply(l_ev6[c(9:11)], as.numeric)
     colnames(l_ev6) <- c(colnames(df),"value", "value_low", "value_up")
-    remove(ev_b)
     
     susceptibility <- (1-.9*rep(mean(predict(seroprevalence, new_data, type="response")),length(age_sentinella)))
     susceptibility <- c(0.5,0.5,(length(15:17)*0.5+length(18:29)*1)/length(15:29),1,1)*susceptibility# children:0.5 adults 1 from ONS see Munday et al 2021
@@ -735,6 +802,7 @@ comix_008_agematrix = function() {
   # create file to save output from different scenarios/sensitivity analysis
   runs <- c("run_panels","run_panels_pooledchildren", "run_waves","run_waves_pooledchildren")
   correlation_df <- c()
+  larg_eig_df <- c()
   fig5_i <- c()
   contact_red <- c()
   for(z in 1:length(runs)){ 
@@ -769,12 +837,12 @@ comix_008_agematrix = function() {
         fig2_i[[(length(fig2_i)+1)]] <- ggarrange(contacts_data[[1]][[1]], contacts_data[[1]][[2]],ncol=2, nrow=1)
         fig2 <- grid.arrange(grobs = fig2_i,ncol=1, nrow=length(fig2_i))
         fig2 <- grid.arrange(fig2, fig2_legend,  layout_matrix=rbind(c(1,1,1,1,1,2), c(1,1,1,1,1,2),c(1,1,1,1,1,2),c(1,1,1,1,1,2),c(1,1,1,1,1,2)))
-        ggsave(fig2, filename = paste0("./output/figures/age_matrices/Figure2.png"), height = 3.5*length(fig2_i), width = 8,  bg = "transparent")
+        ggsave(fig2, filename = paste0("./output/figures/age_matrices/Figure2.pdf"), height = 3.5*length(fig2_i), width = 8,  bg = "transparent")
         # Figure 3
         if(class(fig3_i)!="NULL"){contacts_data[[4]] <-contacts_data[[4]]+labs(y="")}
         fig3_i[[(length(fig3_i)+1)]] <- ggarrange(contacts_data[[4]],ncol=1, nrow=1)
         fig3 <- grid.arrange(grobs = fig3_i, ncol=length(fig3_i))
-        ggsave(fig3, filename = paste0("./output/figures/age_matrices/Figure3.png"),  height = 3, width = 8, bg = "transparent")
+        ggsave(fig3, filename = paste0("./output/figures/age_matrices/Figure3.pdf"),  height = 3, width = 8, bg = "transparent")
       }
       } #get matrices per panel ('paired' child panel: A-C, B-D, E-F) 
     
@@ -789,12 +857,12 @@ comix_008_agematrix = function() {
         fig2_i[[(length(fig2_i)+1)]] <- ggarrange(contacts_data[[1]][[1]], contacts_data[[1]][[2]],ncol=2, nrow=1)
         fig2 <- grid.arrange(grobs = fig2_i,ncol=1, nrow=length(fig2_i))
         fig2 <- grid.arrange(fig2, fig2_legend,  layout_matrix=rbind(c(1,1,1,1,1,2), c(1,1,1,1,1,2),c(1,1,1,1,1,2),c(1,1,1,1,1,2),c(1,1,1,1,1,2)))
-        ggsave(fig2, filename = paste0("./output/figures/age_matrices/sensitivity/SF4.png"), height = 3.5*length(fig2_i), width = 8,  bg = "transparent")
+        ggsave(fig2, filename = paste0("./output/figures/age_matrices/sensitivity/SF4.pdf"), height = 3.5*length(fig2_i), width = 8,  bg = "transparent")
         # SF4
         if(class(fig3_i)!="NULL"){contacts_data[[4]] <-contacts_data[[4]]+labs(y="")}
         fig3_i[[(length(fig3_i)+1)]] <- ggarrange(contacts_data[[4]],ncol=1, nrow=1)
         fig3 <- grid.arrange(grobs = fig3_i, ncol=length(fig3_i))
-        ggsave(fig3, filename = paste0("./output/figures/age_matrices/sensitivity/SF5.png"),  height = 3, width = 7, bg = "transparent")
+        ggsave(fig3, filename = paste0("./output/figures/age_matrices/sensitivity/SF5.pdf"),  height = 3, width = 7, bg = "transparent")
       }
     }
     
@@ -880,6 +948,7 @@ comix_008_agematrix = function() {
   larg_eig[1:17] <- lapply(larg_eig[1:17], function(x) unlist(x))
   if(runs[z]%in% c("run_waves_pooledchildren","run_panels_pooledchildren")){
     #larg_eig$survey <- gsub("all children waves","",larg_eig$survey)
+    
     larg_eig <- larg_eig[order(larg_eig$survey),]
   }
   #https://www.bag.admin.ch/bag/en/home/krankheiten/ausbrueche-epidemien-pandemien/aktuelle-ausbrueche-epidemien/novel-cov/massnahmen-des-bundes.html (Access: 2021-07-19)
@@ -934,7 +1003,7 @@ comix_008_agematrix = function() {
           panel.grid.minor = element_line(colour = "transparent"), 
           panel.grid.major.x = element_line(colour = "transparent"))+
     scale_y_continuous(limits = c(0,100))+
-    labs(x = "", y =bquote("KOF Stringency-\nPlus Index"))
+    labs(x = "", y =bquote("KOF Stringency-\nPlus Index (%)"))
 
   # largest eigenvalue from Swiss CoMix data
   fig4b <- ggplot(larg_eig)+
@@ -966,7 +1035,7 @@ comix_008_agematrix = function() {
           legend.position = "none")+
     scale_color_manual(values=cols25(n=length(larg_eig$survey)), name="")+
     scale_fill_manual(values=cols25(n=length(larg_eig$survey)), name="")+
-    labs(x = "Stringency", y = y_name, color = "") 
+    labs(x = "Stringency (%)", y = y_name, color = "") 
   
   #Vaccine uptake( firstdose coverage)
   fig4d<-ggplot()+
@@ -982,7 +1051,7 @@ comix_008_agematrix = function() {
     theme(axis.title=element_text(size=10),legend.position ="none" ,
           panel.grid.minor = element_line(colour = "transparent"), 
           panel.grid.major.x = element_line(colour = "transparent"))+
-    labs(x = "",  y = "Vaccine coverage", color = "") 
+    labs(x = "",  y = "Vaccine coverage (%)", color = "") 
   #Vaccine uptake and largest eigenvalue
   fig4e <-ggplot(data= larg_eig,aes(y=value, x=vac_median))+
     theme_minimal()+
@@ -998,7 +1067,7 @@ comix_008_agematrix = function() {
           panel.grid.major.x = element_line(colour = "transparent"))+
     coord_cartesian(ylim=c(round(min(larg_eig$value_low))-1,round(max(larg_eig$value_up))+1))+
     guides(color=guide_legend(nrow=4,byrow=TRUE))+
-    labs(x = "Vaccine coverage", y = y_name, color = "") 
+    labs(x = "Vaccine coverage (%)", y = y_name, color = "") 
 
   poster_legend<-g_legend(fig4e)
   fig4e <- fig4e + theme(legend.position="none")
@@ -1072,14 +1141,14 @@ comix_008_agematrix = function() {
   if(n==1&z==4){
     fig4 <-  ggarrange(fig4a,ggarrange(fig4b, fig4c, labels=LETTERS[2:3]),ggarrange(fig4d, fig4e,labels=LETTERS[4:5]),labels=LETTERS[1], nrow =3)
     fig4 <- grid.arrange(fig4, fig5_legend,  layout_matrix=rbind(1,1,1,1,1,1,2))
-    ggsave(fig4, filename = paste0("./output/figures/age_matrices/Figure4.png"), height = 8, width = 6,  bg = "transparent")
+    ggsave(fig4, filename = paste0("./output/figures/age_matrices/Figure4.pdf"), height = 8, width = 6,  bg = "transparent")
   }
 
   #Figure5
   if(n==7&z==4){
     fig5 <-  ggarrange(fig5a,ggarrange(fig4b, fig5b, labels=LETTERS[2:3]),labels=LETTERS[1], nrow =2)
     fig5 <- grid.arrange(fig5, fig5_legend,  layout_matrix=rbind(1,1,1,1,2))
-    ggsave(fig5, filename = paste0("./output/figures/age_matrices/Figure5.png"), height = 6, width = 6,  bg = "transparent")
+    ggsave(fig5, filename = paste0("./output/figures/age_matrices/Figure5.pdf"), height = 6, width = 6,  bg = "transparent")
   }
   
   #poster
@@ -1092,15 +1161,23 @@ comix_008_agematrix = function() {
   
   fig5_i[[(length(fig5_i)+1)]] <-  ggarrange(fig4b5a,fig5b)
   
-  correlation_coef <- rbind(c(coef(glm(value ~ kof_median, data=larg_eig))[2],  confint(glm(value ~ kof_median, data=larg_eig))[2,]),
-                            c(coef(glm(value ~ Re_median, data=larg_eig))[2],  confint(glm(value ~ Re_median, data=larg_eig))[2,]),
-                            c(coef(glm(value ~ vac_median, data=larg_eig))[2],  confint(glm(value ~ vac_median, data=larg_eig))[2,]))
+  larg_eig$kof_median1 <- larg_eig$kof_median/100
+  larg_eig$vac_median1 <- larg_eig$vac_median/100
+  correlation_coef <- rbind(c(coef(glm(larg_eig$value ~ larg_eig$kof_median1))[2],  confint(glm(larg_eig$value ~ larg_eig$kof_median1))[2,]),
+                            c(coef(glm(larg_eig$value ~ larg_eig$Re_median))[2],  confint(glm(larg_eig$value ~ larg_eig$Re_median))[2,]),
+                            c(coef(glm(larg_eig$value ~ larg_eig$vac_median1))[2],  confint(glm(larg_eig$value ~ larg_eig$vac_median1))[2,]))
   correlation_coef <- as.data.frame(correlation_coef)
   colnames(correlation_coef) <- c("value","value_low", "value_up")
   correlation_coef$comparision <- c("kof_median", "Re_median", "vac_median")
   correlation_coef$run <- runs[z]
   correlation_coef$n <- n
   correlation_df <- rbind(correlation_df, correlation_coef)
+  
+  if(n %in% c(1,7) & z %in% 4){
+    larg_eig$n <- n
+    larg_eig_df <- rbind(larg_eig_df, larg_eig)
+  }
+  
         }
       }
     }#end
@@ -1123,14 +1200,11 @@ comix_008_agematrix = function() {
   fig5 <- ggarrange(fig5_l,fig5_m, ncol=2)
   fig5 <- grid.arrange(fig5,fig4_legend,  layout_matrix=rbind(c(1,1,1,1,1,1,1,1,1,1,2), c(1,1,1,1,1,1,1,1,1,1,2),c(1,1,1,1,1,1,1,1,1,1,2),c(1,1,1,1,1,1,1,1,1,1,2), c(1,1,1,1,1,1,1,1,1,1,2), c(1,1,1,1,1,1,1,1,1,1,2)))
   
-  ggsave(fig5, filename = paste0("./output/figures/age_matrices/sensitivity/SF7.png"),  height = 18, width = 12, bg = "transparent")#width = 18
-    
-
+  ggsave(fig5, filename = paste0("./output/figures/age_matrices/sensitivity/SF6.pdf"),  height = 18, width = 12, bg = "transparent")#width = 18
   
   write.csv(correlation_df,"./output/tables/age_matrices/correlation_df.csv")
-  
+  write.csv(larg_eig_df,"./output/tables/age_matrices/larg_eig_df.csv")
   }
-
 
 contact_red
 paste0(round((1- contact_red[c(1:5),c(2)])*100),"% (95% CI: ",round((1- contact_red[c(1:5),c(4)])*100),"-",round((1- contact_red[c(1:5),c(3)])*100),"%)")
@@ -1139,5 +1213,5 @@ paste0(round((1- contact_red[c(11:15),c(2)])*100),"% (95% CI: ",round((1- contac
 
 # poster:
 poster_fig3 <-ggarrange(poster_fig3A, poster_fig3B,poster_fig3C, poster_legend, labels=LETTERS[1:3])
-ggsave(poster_fig3, filename = paste0("./output/figures/age_matrices/Poster_Fig3.png"), height = 6, width = 8,  bg = "transparent")
+ggsave(poster_fig3, filename = paste0("./output/figures/age_matrices/Poster_Fig3.pdf"), height = 6, width = 8,  bg = "transparent")
 

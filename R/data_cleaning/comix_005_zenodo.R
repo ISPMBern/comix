@@ -9,7 +9,7 @@ comix_005_zenodo = function(comixdata_part,comixdata_cont){
     mutate(part_id_num =  sprintf("%02d",1:length(part_id))) %>%
     mutate(part_id = paste0(part_id, part_id_num))
   
-  part$age_part1 <- suppressWarnings(as.numeric(part$age_part))
+  part$age_part1 <- suppressWarnings(as.numeric(part$age_part))#table(is.na(part$age_part1))/length(part$age_part1)
   part$age_part[is.na(part$age_part1)] <- (as.numeric(sub("\\-.*","",part$age_part[is.na(part$age_part1)]))+as.numeric(sub(".*-","",part$age_part[is.na(part$age_part1)])))/2
   part$age_part <- as.numeric(part$age_part)
   
