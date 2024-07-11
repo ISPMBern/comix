@@ -66,7 +66,7 @@ The following publications include data from the CoMix survey in Switzerland:
 ## Other useful repositories
 - [comix_data_clean](https://github.com/jarvisc1/comix_data_clean): For cleaning, processing, and serving CoMix data.
 - [comix_epipose](https://github.com/amygimma/comix_epipose): Report templates for the CoMix Survey.
-- [zukunftstag](https://github.com/amygimma/zukunftstag): Zukunftstag - Umfrage zu sozialen Kontakten.
+- [zukunftstag](https://github.com/ISPMBern/zukunftstag): Zukunftstag - Umfrage zu sozialen Kontakten.
 
 ## Team
 - [PD Dr. Christian Althaus](https://www.ispm.unibe.ch/about_us/staff/althaus_christian/index_eng.html)
