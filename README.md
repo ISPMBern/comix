@@ -56,9 +56,9 @@ matrix_plot(m$matrix,
 ## Publications
 The following publications include data from the CoMix survey in Switzerland:
 
-1. [Social contacts in Switzerland during the COVID-19 pandemic: insights from the CoMix study](https://doi.org/10.1016/j.epidem.2024.100771). Reichmuth ML, Heron L, Beutels P, Hens, N, Low N, Althaus CL. **Epidemics**. 2024 May 10.
-2. [Social contact patterns following the COVID-19 pandemic: a snapshot of post-pandemic behaviour from the CoMix study](https://doi.org/10.1101/2023.08.29.23294767). Jarvis CI, Coletti P, Backer JA, Munday JD, Faes C, Beutels P, Althaus CL, Low N, Wallinga J, Hens N, Edmunds WJ. **medRxiv**. 2023.08.29.23294767.
-3. [Socio-demographic characteristics associated with COVID-19 vaccination uptake in Switzerland: longitudinal analysis of the CoMix study](https://doi.org/10.1186/s12889-023-16405-0). Reichmuth ML, Heron L, Riou J, Moser A, Hauser A, Low N, Althaus CL. **BMC Public Health**. 2023 Aug 10;23(1):1523.
+1. [Social contacts in Switzerland during the COVID-19 pandemic: insights from the CoMix study](https://doi.org/10.1016/j.epidem.2024.100771). Reichmuth ML, Heron L, Beutels P, Hens, N, Low N, Althaus CL. **Epidemics**. 2024 Jun;47:100771.
+2. [Socio-demographic characteristics associated with COVID-19 vaccination uptake in Switzerland: longitudinal analysis of the CoMix study](https://doi.org/10.1186/s12889-023-16405-0). Reichmuth ML, Heron L, Riou J, Moser A, Hauser A, Low N, Althaus CL. **BMC Public Health**. 2023 Aug 10;23(1):1523.
+3. [Social contact patterns following the COVID-19 pandemic: a snapshot of post-pandemic behaviour from the CoMix study](https://doi.org/10.1016/j.epidem.2024.100778). Jarvis CI, Coletti P, Backer JA, Munday JD, Faes C, Beutels P, Althaus CL, Low N, Wallinga J, Hens N, Edmunds WJ. **Epidemics**. 2024 Jun 29;48:100778.
 4. [The influence of COVID-19 risk perception and vaccination status on the number of social contacts across Europe: insights from the CoMix study](https://doi.org/10.1186/s12889-023-16252-z). Wambua J, Loedy N, Jarvis CI, Wong KL, Faes C, Grah R, Prasse B, Sandmann F, Niehus R, Johnson H, Edmunds WJ, Beutels P, Hens N, Coletti P. **BMC Public Health**. 2023 Jul 13;23(1):1350.
 5. [Social contact patterns during the COVID-19 pandemic in 21 European countries – evidence from a two-year study](https://doi.org/10.1186/s12879-023-08214-y). Wong KL, Gimma A, Coletti P, CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jaeger VK, Karch A, Johnson H, Edmunds WJ, Jarvis CI. **BMC Infect Dis**. 2023 Apr 26;23(1):268.
 6. [Pregnancy during COVID-19: social contact patterns and vaccine coverage of pregnant women from CoMix in 19 European countries](https://doi.org/10.1186/s12884-022-05076-1). Wong KLM, Gimma A, Paixao ES; CoMix Europe Working Group, Faes C, Beutels P, Hens N, Jarvis CI, Edmunds WJ. **BMC Pregnancy Childbirth**. 2022 Oct 8;22(1):757.
@@ -66,12 +66,13 @@ The following publications include data from the CoMix survey in Switzerland:
 ## Other useful repositories
 - [comix_data_clean](https://github.com/jarvisc1/comix_data_clean): For cleaning, processing, and serving CoMix data.
 - [comix_epipose](https://github.com/amygimma/comix_epipose): Report templates for the CoMix Survey.
+- [zukunftstag](https://github.com/amygimma/zukunftstag): Zukunftstag - Umfrage zu sozialen Kontakten.
 
 ## Team
 - [PD Dr. Christian Althaus](https://www.ispm.unibe.ch/about_us/staff/althaus_christian/index_eng.html)
 - [Dr. Martina Reichmuth](https://www.ispm.unibe.ch/about_us/staff/reichmuth_martina/index_eng.html)
 - [Prof. Dr. Nicola Low](https://www.ispm.unibe.ch/about_us/staff/low_nicola/index_eng.html)
-- [Dr. Leonie Heron](https://www.ispm.unibe.ch/about_us/staff/heron_leonie/index_eng.html)
+- Dr. Leonie Heron
 
 ## Contact
 If you have any questions regarding the Swiss CoMix survey, please send an email to christian.althaus@unibe.ch.
